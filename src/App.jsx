@@ -4,7 +4,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Search from './pages/Search'
-import WatchRoom from './pages/WatchRoom'
+import WatchRoom from "./pages/WatchRoom";
 
 export default function App() {
   return (

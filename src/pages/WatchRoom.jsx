@@ -83,7 +83,7 @@ export default function WatchRoom() {
       socket.on('change-video', handleVideoChange);
       socket.on('participants-updated', handleParticipants);
       socket.on('kicked', handleKick);
-      
+
       return () => {
         socket.off('change-video', handleVideoChange);
         socket.off('participants-updated', handleParticipants);
@@ -110,7 +110,7 @@ export default function WatchRoom() {
       setVideo(null)
       setRoomData(null)
       let currentVideoId = routeVideoId;
-      
+
       try {
         // Always enforce the videoId configured in the backend for this room
         if (paramRoomId) {
@@ -275,14 +275,14 @@ export default function WatchRoom() {
                 <span className="text-xs text-yellow-300 font-medium">{syncStatus}</span>
               </div>
             )}
-            
+
             {roomData?.host && (
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand/10 border border-brand/20 rounded-lg">
                 <span className="text-xs text-brand/70 font-semibold uppercase tracking-wider">Host</span>
                 <span className="text-sm text-brand-light font-medium">{roomData.host}</span>
               </div>
             )}
-            
+
             {/* Room code */}
             <div className="hidden sm:flex items-center gap-2 bg-dark-700 border border-white/10 rounded-lg px-3 py-1.5">
               <span className="text-xs text-white/40">Room:</span>
@@ -330,73 +330,73 @@ export default function WatchRoom() {
           {/* YouTube Player */}
           <div className="w-full bg-dark-900 border-b border-white/5 flex justify-center px-0 sm:px-6">
             {loading ? (
-              <div 
-                className="w-full aspect-video skeleton sm:my-4 sm:rounded-xl" 
+              <div
+                className="w-full aspect-video skeleton sm:my-4 sm:rounded-xl"
                 style={{ maxHeight: '75vh', maxWidth: 'calc(75vh * 16 / 9)' }}
               />
             ) : (
               <div ref={fullScreenRef} className={`relative w-full flex justify-center group ${isFullscreen ? 'bg-black' : ''}`} style={{ maxHeight: isFullscreen ? '100vh' : '75vh', maxWidth: isFullscreen ? '100vw' : 'calc(75vh * 16 / 9)' }}>
-                 <YouTubePlayer 
-                   videoId={playerVideoId} 
-                   socket={socket} 
-                   roomId={paramRoomId}
-                   isHost={hasPlaybackControl} 
-                   onSyncStatusChange={setSyncStatus} 
-                   onStateChange={handlePlayerStateChange}
-                 />
+                <YouTubePlayer
+                  videoId={playerVideoId}
+                  socket={socket}
+                  roomId={paramRoomId}
+                  isHost={hasPlaybackControl}
+                  onSyncStatusChange={setSyncStatus}
+                  onStateChange={handlePlayerStateChange}
+                />
 
-                 {/* Custom End-Screen Overlay */}
-                 {isVideoEnded && (
-                    <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-[60] flex flex-col p-4 sm:p-8 animate-fade-in overflow-y-auto">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-white">Up Next on Bigg78</h2>
-                            <button onClick={() => setIsVideoEnded(false)} className="text-white/40 hover:text-white">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {related.slice(0, 6).map(v => (
-                                <div key={v.id} onClick={() => handleVideoSelect(v)} className="group cursor-pointer">
-                                    <div className="aspect-video rounded-lg overflow-hidden relative mb-2">
-                                        <img src={v.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/0 transition-colors flex items-center justify-center">
-                                            <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
-                                                <svg className="w-5 h-5 text-white fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs sm:text-sm font-semibold text-white line-clamp-1 group-hover:text-brand transition-colors">{v.title}</p>
-                                    <p className="text-[10px] sm:text-xs text-white/40">{v.channel}</p>
-                                </div>
-                            ))}
-                        </div>
+                {/* Custom End-Screen Overlay */}
+                {isVideoEnded && (
+                  <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-[60] flex flex-col p-4 sm:p-8 animate-fade-in overflow-y-auto">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-bold text-white">Up Next on Bigg78</h2>
+                      <button onClick={() => setIsVideoEnded(false)} className="text-white/40 hover:text-white">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
-                 )}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {related.slice(0, 6).map(v => (
+                        <div key={v.id} onClick={() => handleVideoSelect(v)} className="group cursor-pointer">
+                          <div className="aspect-video rounded-lg overflow-hidden relative mb-2">
+                            <img src={v.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/0 transition-colors flex items-center justify-center">
+                              <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                                <svg className="w-5 h-5 text-white fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-xs sm:text-sm font-semibold text-white line-clamp-1 group-hover:text-brand transition-colors">{v.title}</p>
+                          <p className="text-[10px] sm:text-xs text-white/40">{v.channel}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                 <GlassChat 
-                    roomId={paramRoomId} 
-                    socket={socket} 
-                    user={user} 
-                    participants={participants} 
-                 />
+                <GlassChat
+                  roomId={paramRoomId}
+                  socket={socket}
+                  user={user}
+                  participants={participants}
+                />
 
-                 <button 
-                   onClick={toggleFullscreen}
-                   className={`absolute top-4 right-4 z-50 bg-black/60 hover:bg-black/80 backdrop-blur-md p-2 rounded-lg text-white transition-opacity duration-300 ${isFullscreen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                   title="Toggle Fullscreen"
-                 >
-                   {isFullscreen ? (
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                     </svg>
-                   ) : (
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                     </svg>
-                   )}
-                 </button>
+                <button
+                  onClick={toggleFullscreen}
+                  className={`absolute top-4 right-4 z-50 bg-black/60 hover:bg-black/80 backdrop-blur-md p-2 rounded-lg text-white transition-opacity duration-300 ${isFullscreen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                  title="Toggle Fullscreen"
+                >
+                  {isFullscreen ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  )}
+                </button>
               </div>
             )}
           </div>
@@ -422,9 +422,9 @@ export default function WatchRoom() {
                   <button className="flex-none flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 px-4 py-2 rounded-full text-sm whitespace-nowrap">
                     <span>👍</span> Like
                   </button>
-                  <button 
-                     onClick={copyRoomCode} 
-                     className="flex-none flex items-center gap-2 bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand-light px-4 py-2 rounded-full text-sm whitespace-nowrap"
+                  <button
+                    onClick={copyRoomCode}
+                    className="flex-none flex items-center gap-2 bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand-light px-4 py-2 rounded-full text-sm whitespace-nowrap"
                   >
                     <span>🔗</span> {showCopied ? 'Copied!' : 'Share Room'}
                   </button>
@@ -440,16 +440,16 @@ export default function WatchRoom() {
 
                 {/* Mobile Members Section */}
                 <div className="lg:hidden block mb-10">
-                   <h3 className="text-base font-bold text-white mb-4">Room Management</h3>
-                   <div className="bg-white/5 rounded-2xl p-1 border border-white/5">
-                      <ChatSidebar 
-                          roomId={ROOM_ID} 
-                          socket={socket} 
-                          user={user} 
-                          isOriginHost={isHost} 
-                          participants={participants} 
-                      />
-                   </div>
+                  <h3 className="text-base font-bold text-white mb-4">Room Management</h3>
+                  <div className="bg-white/5 rounded-2xl p-1 border border-white/5">
+                    <ChatSidebar
+                      roomId={ROOM_ID}
+                      socket={socket}
+                      user={user}
+                      isOriginHost={isHost}
+                      participants={participants}
+                    />
+                  </div>
                 </div>
 
                 {/* Related / Up Next */}
@@ -458,11 +458,11 @@ export default function WatchRoom() {
                     <h2 className="text-lg font-bold text-white">Up Next</h2>
                     {hasPlaybackControl && (
                       <form onSubmit={handleHostSearch} className="flex gap-2 w-full sm:w-auto">
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search videos..." 
+                          placeholder="Search videos..."
                           className="bg-dark-700 border border-white/10 text-white text-sm rounded-xl px-4 py-2 flex-1 sm:w-64 focus:outline-none focus:border-brand/40"
                         />
                         <button type="submit" className="bg-brand text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-brand-dark transition-colors">
@@ -471,7 +471,7 @@ export default function WatchRoom() {
                       </form>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                     {related.map(v => (
                       <div
@@ -502,16 +502,16 @@ export default function WatchRoom() {
         </div>
 
         {/* Desktop Sidebar (Toggled) */}
-        <div 
+        <div
           className={`shrink-0 bg-dark-900 border-l border-white/5 transition-all duration-300 hidden lg:block overflow-hidden ${chatOpen ? 'w-80' : 'w-0 border-0'}`}
         >
           <div className="w-80 h-full">
-            <ChatSidebar 
-              roomId={ROOM_ID} 
-              socket={socket} 
-              user={user} 
-              isOriginHost={isHost} 
-              participants={participants} 
+            <ChatSidebar
+              roomId={ROOM_ID}
+              socket={socket}
+              user={user}
+              isOriginHost={isHost}
+              participants={participants}
             />
           </div>
         </div>
@@ -519,6 +519,4 @@ export default function WatchRoom() {
     </div>
   )
 }
-    </div>
-  )
-}
+
