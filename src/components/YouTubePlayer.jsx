@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function YouTubePlayer({ videoId, socket, roomId, isHost, onSyncStatusChange, autoplay = true }) {
+export default function YouTubePlayer({ videoId, socket, roomId, isHost, onSyncStatusChange, onStateChange, autoplay = true }) {
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const isSyncing = useRef(false);
@@ -35,10 +35,10 @@ export default function YouTubePlayer({ videoId, socket, roomId, isHost, onSyncS
       playerVars: {
         autoplay: autoplay ? 1 : 0,
         fs: 0,
-        rel: 0,
+        rel: 0,           // Only show related videos from the same channel
         modestbranding: 1,
         playsinline: 1,
-        iv_load_policy: 3
+        iv_load_policy: 3 // Hide annotations
       },
       events: {
         onStateChange: handlePlayerStateChange,
@@ -53,6 +53,9 @@ export default function YouTubePlayer({ videoId, socket, roomId, isHost, onSyncS
   }, [apiReady, videoId]);
 
   const handlePlayerStateChange = (event) => {
+    // Notify parent of ANY state change (useful for showing overlays on ENDED)
+    onStateChange?.(event.data);
+
     // Block emits if this client is not the official Host
     if (!isHost) return;
     
