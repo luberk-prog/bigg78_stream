@@ -13,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 const httpServer = createServer(app);
+console.log('Initializing Socket.IO with CORS origin: *');
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
@@ -159,14 +160,19 @@ io.on('connection', (socket) => {
 });
 
 // Serve frontend static artifacts
-app.use(express.static(path.join(__dirname, '../dist')));
+const distPath = path.join(__dirname, '../dist');
+console.log(`Serving static files from: ${distPath}`);
+app.use(express.static(distPath));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  const indexPath = path.join(distPath, 'index.html');
+  res.sendFile(indexPath);
 });
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`Node server runtime bound to port ${PORT} (Monolith Engine Active)`);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`>>> Monolith Engine Active <<<`);
+  console.log(`>>> Listening on port ${PORT} <<<`);
+  console.log(`>>> Binding to interface 0.0.0.0 <<<`);
 });
