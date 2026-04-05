@@ -9,8 +9,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+app.get('/ping', (req, res) => res.send('pong'));
 
 const httpServer = createServer(app);
 console.log('Initializing Socket.IO with CORS origin: *');
@@ -170,9 +172,10 @@ app.get('*', (req, res) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT) || 5000;
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`>>> Monolith Engine Active <<<`);
-  console.log(`>>> Listening on port ${PORT} <<<`);
-  console.log(`>>> Binding to interface 0.0.0.0 <<<`);
+  console.log(`>>> MONOLITH STARTUP SUCCESSFUL <<<`);
+  console.log(`>>> SERVICE_PORT: ${PORT} <<<`);
+  console.log(`>>> INTERFACE: 0.0.0.0 <<<`);
+  console.log(`>>> Health check: /ping <<<`);
 });
