@@ -42,7 +42,7 @@ export default function VideoCard({ video, size = 'md' }) {
   return (
     <div
       onClick={() => navigate(`/watch/${destination}`)}
-      className={`${sizeClasses[size]} shrink-0 cursor-pointer group`}
+      className={`${sizeClasses[size]} shrink-0 cursor-pointer group hover-card animate-fade-in-up`}
     >
       {/* Thumbnail */}
       <div className="relative rounded-xl overflow-hidden aspect-video bg-dark-600">

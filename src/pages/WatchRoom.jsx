@@ -40,6 +40,7 @@ export default function WatchRoom() {
 
   const fullScreenRef = useRef(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isTheaterMode, setIsTheaterMode] = useState(false)
   const [isVideoEnded, setIsVideoEnded] = useState(false)
 
   const isHost = Boolean(user?.email && roomData?.host === user.email)
@@ -301,14 +302,26 @@ export default function WatchRoom() {
             </div>
 
             {/* Chat toggle (Only on desktop/large screens, mobile chat is handled by overlay) */}
-            <button
-              onClick={() => setChatOpen(p => !p)}
-              className={`p-2 rounded-lg transition-all lg:flex hidden ${chatOpen ? 'bg-brand/20 text-brand' : 'text-white/50 hover:text-white hover:bg-white/10'}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </button>
+            <div className="hidden lg:flex items-center gap-1 bg-dark-700 border border-white/10 rounded-lg p-1">
+              <button
+                onClick={() => setIsTheaterMode(prev => !prev)}
+                className={`p-1.5 rounded-md transition-all ${isTheaterMode ? 'bg-brand/20 text-brand' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                title="Theater Mode"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setChatOpen(p => !p)}
+                className={`p-1.5 rounded-md transition-all ${chatOpen ? 'bg-brand/20 text-brand' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                title="Toggle Sidebar Chat"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -328,14 +341,14 @@ export default function WatchRoom() {
           )}
 
           {/* YouTube Player */}
-          <div className="w-full bg-dark-900 border-b border-white/5 flex justify-center px-0 sm:px-6">
+          <div className={`w-full bg-dark-950 border-b border-white/5 flex justify-center transition-all duration-500 ${isTheaterMode ? 'px-0 py-0' : 'px-0 sm:px-6'}`}>
             {loading ? (
               <div
-                className="w-full aspect-video skeleton sm:my-4 sm:rounded-xl"
-                style={{ maxHeight: '75vh', maxWidth: 'calc(75vh * 16 / 9)' }}
+                className={`w-full aspect-video skeleton transition-all duration-500 ${isTheaterMode ? '' : 'sm:my-4 sm:rounded-xl'}`}
+                style={{ maxHeight: isTheaterMode ? '85vh' : '75vh', maxWidth: isTheaterMode ? '100vw' : 'calc(75vh * 16 / 9)' }}
               />
             ) : (
-              <div ref={fullScreenRef} className={`relative w-full flex justify-center group ${isFullscreen ? 'bg-black' : ''}`} style={{ maxHeight: isFullscreen ? '100vh' : '75vh', maxWidth: isFullscreen ? '100vw' : 'calc(75vh * 16 / 9)' }}>
+              <div ref={fullScreenRef} className={`relative w-full flex justify-center group transition-all duration-500 ${isFullscreen ? 'bg-black' : ''}`} style={{ maxHeight: isFullscreen ? '100vh' : (isTheaterMode ? '85vh' : '75vh'), maxWidth: isFullscreen ? '100vw' : (isTheaterMode ? '100vw' : 'calc(75vh * 16 / 9)') }}>
                 <YouTubePlayer
                   videoId={playerVideoId}
                   socket={socket}

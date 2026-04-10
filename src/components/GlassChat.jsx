@@ -73,12 +73,12 @@ export default function GlassChat({ roomId, socket, user, participants }) {
         <div className="max-h-60 overflow-y-auto px-4 py-4 space-y-3 flex flex-col pointer-events-auto" style={{ scrollbarWidth: 'none' }}>
           {messages.map((msg, i) => (
             <div key={msg.id} className="animate-fade-in-up">
-               <div className={`p-2.5 rounded-2xl backdrop-blur-sm ${msg.isOwn ? 'bg-brand/40 ml-6 rounded-tr-sm border border-brand/30' : 'bg-black/60 mr-6 rounded-tl-sm border border-white/10'}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                     <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider">{msg.isOwn ? 'You' : msg.user}</span>
-                     <span className="text-[10px] text-white/50">{msg.time}</span>
+               <div className={`p-3 rounded-2xl backdrop-blur-md ${msg.isOwn ? 'bg-brand/30 ml-8 rounded-tr-sm border border-white/10' : 'bg-white/10 mr-8 rounded-tl-sm border border-white/5'}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                     <span className={`text-[10px] font-bold uppercase tracking-wider ${msg.isOwn ? 'text-brand-light' : 'text-white/80'}`}>{msg.isOwn ? 'You' : msg.user}</span>
+                     <span className="text-[9px] text-white/40">{msg.time}</span>
                   </div>
-                  <p className="text-sm text-white drop-shadow-md leading-relaxed">{msg.text}</p>
+                  <p className="text-sm text-white/90 leading-relaxed break-words">{msg.text}</p>
                </div>
             </div>
           ))}
