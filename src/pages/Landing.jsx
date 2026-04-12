@@ -17,6 +17,10 @@ export default function Landing() {
 
   if (user) navigate('/dashboard')
 
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
       {/* Background and Overlay are handled globally by index.css body styles */}
@@ -31,8 +35,8 @@ export default function Landing() {
              <span className="text-xl font-black tracking-tighter uppercase italic">Bigg78 <span className="text-brand">Stream</span></span>
           </div>
           <button 
-            onClick={() => navigate('/auth/login')}
-            className="glass px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10"
+            onClick={() => navigate('/login')}
+            className="glass px-8 py-3 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10 pointer-events-auto"
           >
             Sign In
           </button>
@@ -53,12 +57,15 @@ export default function Landing() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <button 
-                onClick={() => navigate('/auth/register')}
-                className="bg-white text-black font-black px-12 py-5 rounded-[2rem] text-lg hover:bg-white/90 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.2)]"
+                onClick={() => navigate('/signup')}
+                className="bg-white text-black font-black px-12 py-5 rounded-[2rem] text-lg hover:bg-white/90 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.2)] pointer-events-auto"
               >
                 Get Started Free
               </button>
-              <button className="glass px-12 py-5 rounded-[2rem] text-lg font-bold border border-white/10 hover:bg-white/5 transition-all">
+              <button 
+                onClick={scrollToFeatures}
+                className="glass px-12 py-5 rounded-[2rem] text-lg font-bold border border-white/10 hover:bg-white/5 transition-all pointer-events-auto"
+              >
                 Learn More
               </button>
             </div>
@@ -66,7 +73,7 @@ export default function Landing() {
         </section>
 
         {/* Features Section */}
-        <section className="max-w-7xl mx-auto px-6 py-32 grid grid-cols-1 md:grid-cols-3 gap-10">
+        <section id="features" className="max-w-7xl mx-auto px-6 py-32 grid grid-cols-1 md:grid-cols-3 gap-10">
           <FeatureCard 
             title="Glassmorphic Design"
             desc="A stunning, translucent interface inspired by the future of computing, optimized for cinematic clarity."
