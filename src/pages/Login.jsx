@@ -23,96 +23,82 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900 particles-bg flex items-center justify-center px-4">
-      {/* Glow orbs */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-brand/10 blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 right-1/4 w-[300px] h-[300px] rounded-full bg-accent-pink/8 blur-[100px] pointer-events-none" />
-
-      <div className="w-full max-w-md relative z-10">
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+      <div className="w-full max-w-md relative z-10 animate-fade-in-up">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-accent-pink flex items-center justify-center shadow-lg shadow-brand/30">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-              </svg>
+        <div className="text-center mb-10">
+          <div 
+            onClick={() => navigate('/')} 
+            className="inline-flex items-center gap-3 mb-8 cursor-pointer group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-brand flex items-center justify-center shadow-2xl shadow-brand/40 group-hover:scale-110 transition-transform">
+               <span className="text-white font-black text-2xl italic">B</span>
             </div>
-            <span className="text-xl font-bold"><span className="text-gradient">Bigg78</span><span className="text-white"> Stream</span></span>
-          </Link>
-          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
-          <p className="text-white/50 mt-1 text-sm">Sign in to continue watching</p>
+            <span className="text-2xl font-black tracking-tighter uppercase italic">Bigg78 <span className="text-brand">Stream</span></span>
+          </div>
+          <h1 className="text-3xl font-black text-white tracking-tight">Welcome back</h1>
+          <p className="text-white/40 mt-2 text-sm font-bold uppercase tracking-widest">Sign in to your premium account</p>
         </div>
 
         {/* Card */}
-        <div className="card-glass p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="glass-card p-10 border border-white/10 shadow-3xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-lg">
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest px-4 py-3 rounded-xl flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 {error}
               </div>
             )}
 
             <div>
-              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2 block">Email</label>
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 block">Email Address</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                className="input-field"
-                placeholder="you@example.com"
-                autoComplete="email"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20"
+                placeholder="you@cinematic.com"
               />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Password</label>
-                <button type="button" className="text-xs text-brand hover:text-brand-light transition-colors">Forgot?</button>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Password</label>
+                <button type="button" className="text-[10px] font-black text-brand uppercase tracking-widest hover:text-brand-light transition-colors">Forgot?</button>
               </div>
               <input
                 type="password"
                 value={form.password}
                 onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                className="input-field"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20"
                 placeholder="••••••••"
-                autoComplete="current-password"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary py-3.5 rounded-xl flex items-center justify-center gap-2 text-base"
+              className="w-full bg-white text-black font-black py-4 rounded-[1.5rem] hover:bg-white/90 active:scale-95 transition-all shadow-2xl shadow-white/10 flex items-center justify-center gap-3"
             >
               {loading ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </>
+                <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
               ) : 'Sign In'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
+          <div className="flex items-center gap-4 my-8">
             <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-white/30">or continue with</span>
+            <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">or</span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
 
-          {/* Social buttons */}
-          <div className="flex flex-col gap-3">
-            <GoogleLoginButton />
-          </div>
+          <GoogleLoginButton />
         </div>
 
-        <p className="text-center text-white/40 text-sm mt-6">
+        <p className="text-center text-white/40 text-sm mt-8 font-medium">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-brand hover:text-brand-light transition-colors font-semibold">
-            Sign up free
+          <Link to="/signup" className="text-brand hover:text-brand-light transition-colors font-black uppercase tracking-widest text-[11px] ml-1">
+            Sign up
           </Link>
         </p>
       </div>
