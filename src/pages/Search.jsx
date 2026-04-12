@@ -230,7 +230,7 @@ export default function Search() {
         {/* Trending tags (shown when no query) */}
         {!query && !loading && (
           <div className="mt-16">
-            <h2 className="section-title">🔥 Trending Searches</h2>
+            <h2 className="section-title">Trending Searches</h2>
             <div className="flex flex-wrap gap-2">
               {trendingTags.map(tag => (
                 <a

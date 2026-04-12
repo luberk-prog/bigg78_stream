@@ -433,13 +433,15 @@ export default function WatchRoom() {
                 {/* Mobile Action Row */}
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
                   <button className="flex-none flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 px-4 py-2 rounded-full text-sm whitespace-nowrap">
-                    <span>👍</span> Like
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4l-1.4 1.866a4 4 0 00-.8 2.4z"/></svg>
+                    Like
                   </button>
                   <button
                     onClick={copyRoomCode}
                     className="flex-none flex items-center gap-2 bg-brand/10 hover:bg-brand/20 border border-brand/20 text-brand-light px-4 py-2 rounded-full text-sm whitespace-nowrap"
                   >
-                    <span>🔗</span> {showCopied ? 'Copied!' : 'Share Room'}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 100-2.684 3 3 0 000 2.684zm0 12.684a3 3 0 100-2.684 3 3 0 000 2.684z"/></svg> 
+                    {showCopied ? 'Copied!' : 'Share Room'}
                   </button>
                   <a
                     href={`https://www.youtube.com/watch?v=${playerVideoId}`}

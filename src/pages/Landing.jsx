@@ -18,7 +18,7 @@ const features = [
       </svg>
     ),
     title: 'Live Chat',
-    desc: 'React instantly with your crew using messages, emojis, and reactions.',
+    desc: 'React instantly with your crew using messages and reactions.',
   },
   {
     icon: (
@@ -163,10 +163,10 @@ export default function Landing() {
           </div>
           {/* Floating chat bubbles */}
           <div className="absolute -right-4 top-8 bg-dark-700/90 backdrop-blur text-white text-xs px-3 py-2 rounded-xl border border-white/10 shadow-xl animate-bounce" style={{animationDuration:'3s'}}>
-            🔥 This scene is incredible!!
+            This scene is incredible!!
           </div>
           <div className="absolute -left-4 bottom-20 bg-brand/20 backdrop-blur text-white text-xs px-3 py-2 rounded-xl border border-brand/30 shadow-xl animate-bounce" style={{animationDuration:'4s', animationDelay:'0.5s'}}>
-            😂 No spoilers please!
+            No spoilers please!
           </div>
         </div>
       </section>
@@ -210,7 +210,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-8 px-6 text-center text-white/30 text-sm">
-        <p>© 2025 Bigg78 Stream. Built for movie lovers. 🎬</p>
+        <p>© 2025 Bigg78 Stream. Built for movie lovers.</p>
       </footer>
     </div>
   )

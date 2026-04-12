@@ -57,6 +57,11 @@ export default function Dashboard() {
   const [showRoomModal, setShowRoomModal] = useState(false)
   const [roomCode, setRoomCode] = useState('')
 
+  // Fallback mock videos split into rows
+  const mockTrending = mockVideos.filter(v => v.category === 'trending')
+  const mockRecommended = mockVideos.filter(v => v.category === 'recommended')
+  const mockWatchAgain = mockVideos.filter(v => v.category === 'watch_again')
+
   const [trending, setTrending] = useState([])
   const [recommended, setRecommended] = useState([])
   const [loadingTrending, setLoadingTrending] = useState(true)
@@ -217,7 +222,7 @@ export default function Dashboard() {
 
         {/* Active Rooms */}
         <section>
-          <h2 className="section-title">
+          <h2 className="text-xs font-black text-white/40 mb-4 uppercase tracking-[0.3em] flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             Active Watch Rooms
           </h2>
