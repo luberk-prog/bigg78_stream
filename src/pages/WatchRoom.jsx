@@ -35,6 +35,8 @@ export default function WatchRoom() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isTheaterMode, setIsTheaterMode] = useState(false)
   const [isVideoEnded, setIsVideoEnded] = useState(false)
+  const [autoNext, setAutoNext] = useState(true)
+  const [isUpNextVisible, setIsUpNextVisible] = useState(false)
 
   const isHost = Boolean(user?.email && roomData?.host === user.email)
   const isCoHost = participants.find(p => p.socketId === socket?.id)?.role === 'co-host'
@@ -116,6 +118,20 @@ export default function WatchRoom() {
     loadVideo()
     return () => { cancelled = true }
   }, [routeVideoId, paramRoomId, refreshKey])
+
+  // Auto-Next Logic
+  useEffect(() => {
+    if (isVideoEnded && autoNext && related.length > 0 && hasPlaybackControl) {
+      const nextVid = related[0];
+      const targetId = nextVid.youtubeId || nextVid.id;
+      if (paramRoomId && socket) {
+        socket.emit('change-video', paramRoomId, targetId);
+      } else {
+        navigate(`/watch/${targetId}`);
+      }
+      setIsVideoEnded(false);
+    }
+  }, [isVideoEnded, autoNext, related, hasPlaybackControl, paramRoomId, socket, navigate])
 
   const playerVideoId = video?.youtubeId || video?.id || null
 
@@ -222,10 +238,11 @@ export default function WatchRoom() {
         </div>
 
         {/* Right Pane: Members & Up Next */}
+        {/* Right Pane: Members & Immersive Content Toggle */}
         <div className="flex-1 min-w-[320px] max-w-[400px] flex flex-col gap-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <section className="glass-card flex-none border border-white/10 shadow-3xl">
              <ChatSidebar
-                roomId={ROOM_ID}
+                roomId={paramRoomId}
                 socket={socket}
                 user={user}
                 isOriginHost={isHost}
@@ -233,27 +250,53 @@ export default function WatchRoom() {
               />
           </section>
 
-          <section className="flex-1 glass-card p-6 border border-white/10 shadow-3xl flex flex-col min-h-0">
-             <div className="flex items-center justify-between mb-6 shrink-0">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40">Up Next</h3>
-                <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">Auto on</span>
-             </div>
-             <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar">
-                {related.map(v => (
-                   <div key={v.id} onClick={() => handleVideoSelect(v)} className="flex gap-4 group cursor-pointer active:scale-95 transition-all">
-                      <div className="relative w-28 aspect-video rounded-xl overflow-hidden shrink-0 shadow-lg border border-white/5">
-                         <img src={v.thumbnail} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" alt="" />
-                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z" /></svg>
-                         </div>
-                      </div>
-                      <div className="flex flex-col justify-center min-w-0">
-                         <h4 className="text-xs font-bold leading-tight group-hover:text-brand-light transition-colors line-clamp-1">{v.title}</h4>
-                         <p className="text-[10px] text-white/30 mt-1 uppercase tracking-widest font-black">{v.channel}</p>
+          {/* Collapsible Up Next / Queue */}
+          <section className="relative flex-1 flex flex-col min-h-0">
+             <button 
+                onClick={() => setIsUpNextVisible(!isUpNextVisible)}
+                className="w-full glass-card p-6 border border-white/10 flex items-center justify-between group hover:bg-white/5 transition-all"
+             >
+                <div className="flex items-center gap-4">
+                   <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center text-brand">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                   </div>
+                   <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">Up Next Dropdown</h3>
+                </div>
+                <svg className={`w-5 h-5 text-white/20 transition-transform duration-500 ${isUpNextVisible ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+             </button>
+
+             {isUpNextVisible && (
+                <div className="absolute top-full left-0 w-full mt-4 glass-card p-6 border border-white/10 shadow-3xl z-40 animate-fade-in-up max-h-[400px] overflow-hidden flex flex-col">
+                   <div className="flex items-center justify-between mb-6 shrink-0">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30 italic">Queueing {related.length} items</span>
+                      <div className="flex items-center gap-3">
+                         <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Auto Next</span>
+                         <button 
+                            onClick={(e) => { e.stopPropagation(); setAutoNext(!autoNext); }}
+                            className={`w-10 h-5 rounded-full transition-all relative ${autoNext ? 'bg-brand' : 'bg-white/10'}`}
+                         >
+                            <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${autoNext ? 'left-6' : 'left-1'}`} />
+                         </button>
                       </div>
                    </div>
-                ))}
-             </div>
+                   <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar">
+                      {related.map(v => (
+                         <div key={v.id} onClick={() => handleVideoSelect(v)} className="flex gap-4 group cursor-pointer active:scale-95 transition-all">
+                            <div className="relative w-28 aspect-video rounded-xl overflow-hidden shrink-0 shadow-lg border border-white/5">
+                               <img src={v.thumbnail} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" alt="" />
+                               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z" /></svg>
+                               </div>
+                            </div>
+                            <div className="flex flex-col justify-center min-w-0">
+                               <h4 className="text-xs font-bold leading-tight group-hover:text-brand-light transition-colors line-clamp-1">{v.title}</h4>
+                               <p className="text-[10px] text-white/30 mt-1 uppercase tracking-widest font-black truncate">{v.channel}</p>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
+             )}
           </section>
         </div>
       </main>

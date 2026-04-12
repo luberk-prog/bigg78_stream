@@ -27,19 +27,22 @@ const io = new Server(httpServer, {
 // In-memory room store.
 const rooms = {};
 
-// Helper to generate a uppercase 6-character random room ID
+// Helper to generate a unique uppercase 6-character random room ID
 function generateRoomId() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  if (rooms[code]) return generateRoomId(); // Collision check
+  return code;
 }
 
 // Routes
 app.post('/api/rooms', (req, res) => {
-  const { videoId, host } = req.body;
+  const { videoId, host, roomName } = req.body;
   if (!videoId) return res.status(400).json({ error: 'videoId is required' });
 
   const roomId = generateRoomId(); 
   const newRoom = {
     roomId,
+    roomName: roomName || `${host}'s Room`,
     videoId,
     host: host || 'Guest',
     createdAt: new Date().toISOString(),
@@ -47,7 +50,7 @@ app.post('/api/rooms', (req, res) => {
   };
 
   rooms[roomId] = newRoom;
-  console.log(`Creating room with video: ${videoId}`);
+  console.log(`Creating room "${newRoom.roomName}" (${roomId}) for video: ${videoId}`);
   res.status(201).json(newRoom);
 });
 

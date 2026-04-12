@@ -51,6 +51,13 @@ export default function YouTubePlayer({
     socket?.emit('seek', roomId, time)
   }
 
+  const handleSkip = (seconds) => {
+    if (!isHost) return
+    const newTime = Math.max(0, Math.min(duration, currentTime + seconds))
+    playerRef.current.seekTo(newTime, true)
+    socket?.emit('seek', roomId, newTime) // Reuse seek event for simplicity
+  }
+
   useEffect(() => {
     if (!window.YT) {
       const tag = document.createElement('script')
@@ -185,20 +192,38 @@ export default function YouTubePlayer({
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <button 
-                onClick={togglePlay}
-                disabled={!isHost}
-                className="w-12 h-12 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90"
-              >
-                {isPlaying ? (
-                   <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                ) : (
-                   <svg className="w-6 h-6 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"/></svg>
-                )}
-              </button>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => handleSkip(-10)}
+                  disabled={!isHost}
+                  className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 opacity-60 hover:opacity-100 disabled:opacity-20"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM2.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 009 16V8a1 1 0 00-1.6-.8l-5.334 4z" /></svg>
+                </button>
+                
+                <button 
+                  onClick={togglePlay}
+                  disabled={!isHost}
+                  className="w-14 h-14 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 shadow-2xl"
+                >
+                  {isPlaying ? (
+                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  ) : (
+                    <svg className="w-6 h-6 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"/></svg>
+                  )}
+                </button>
+
+                <button 
+                  onClick={() => handleSkip(10)}
+                  disabled={!isHost}
+                  className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 opacity-60 hover:opacity-100 disabled:opacity-20"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM21.933 12.8a1 1 0 000-1.6L16.6 7.2A1 1 0 0015 8v8a1 1 0 001.6.8l5.333-4z" /></svg>
+                </button>
+              </div>
               
               <div className="flex flex-col">
-                 <span className="text-xs font-black tracking-widest uppercase opacity-40">Tuning</span>
+                 <span className="text-[8px] font-black tracking-widest uppercase opacity-40">Tuning</span>
                  <span className="text-sm font-bold mono tracking-tighter">
                    {formatTime(currentTime)} / {formatTime(duration)}
                  </span>

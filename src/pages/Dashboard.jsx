@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0)
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
+  const [roomName, setRoomName] = useState('')
+  const [createdRoomId, setCreatedRoomId] = useState(null)
 
   // Fallback mock videos split into categories
   const mockTrending = mockVideos.filter(v => v.category === 'trending')
@@ -58,12 +60,16 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           videoId: videoId,
-          host: user?.email || 'Guest'
+          host: user?.name || user?.email || 'Guest',
+          roomName: roomName
         })
       })
       if (res.ok) {
         const room = await res.json()
-        navigate(`/room/${room.roomId}`)
+        setCreatedRoomId(room.roomId)
+        // Wait a beat for the user to see the code, then navigate or let them click
+        // For now, let's navigate after 2s
+        setTimeout(() => navigate(`/room/${room.roomId}`), 1000)
       } else {
         throw new Error('Server error')
       }
@@ -157,6 +163,22 @@ export default function Dashboard() {
 
           {/* Right Lane: Hero & Gallery */}
           <div className="col-span-12 lg:col-span-9 flex flex-col gap-10 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            
+            {/* Onboarding Welcome Banner */}
+            <section className="glass-card p-8 border border-white/10 shadow-3xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-brand/10 transition-all duration-700" />
+               <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                  <div className="w-16 h-16 rounded-3xl bg-brand/20 flex items-center justify-center text-brand shrink-0 border border-brand/20 shadow-2xl">
+                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                     <h2 className="text-2xl font-black mb-1 tracking-tight">Stream Anything, <span className="text-brand">Together</span></h2>
+                     <p className="text-white/40 text-sm font-medium leading-relaxed max-w-xl">Search for any YouTube video, host a private theater, and chat with friends in perfect sync. Welcome to the future of collaborative entertainment.</p>
+                  </div>
+                  <button className="bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Dismiss</button>
+               </div>
+            </section>
+
             {/* Mega Hero Banner */}
             <section className="relative h-[500px] rounded-[2.5rem] overflow-hidden group shadow-3xl border border-white/10 bg-dark-800">
               {isLoading ? (
@@ -246,7 +268,29 @@ export default function Dashboard() {
               <h2 className="text-3xl font-black mb-2 tracking-tight">{selectedVideo.title}</h2>
               <p className="text-white/40 mb-10 text-sm font-medium leading-relaxed">{selectedVideo.description || 'Join millions of viewers in this cinematic journey. Experience it alone or host a private room for your friends.'}</p>
               
-              <div className="flex gap-6">
+              <div className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/5">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-4 block italic">Customization</label>
+                <input 
+                  type="text" 
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="Cinematic Experience Room"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-xs font-bold focus:outline-none focus:border-brand/40 transition-all placeholder:text-white/10"
+                />
+              </div>
+              
+              <div className="flex gap-6 relative">
+                {createdRoomId ? (
+                   <div className="absolute inset-0 bg-dark-900/90 backdrop-blur-xl z-20 flex flex-col items-center justify-center p-6 animate-fade-in rounded-2xl border border-brand/20">
+                      <div className="w-12 h-12 rounded-full bg-brand/20 flex items-center justify-center mb-4">
+                        <svg className="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <h3 className="text-xl font-black mb-1">Room Created!</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-4">Room Code: <span className="text-brand select-all">{createdRoomId}</span></p>
+                      <div className="w-full bg-white/5 p-3 rounded-xl text-center text-[10px] font-black uppercase tracking-widest animate-pulse">Entering Theater...</div>
+                   </div>
+                ) : null}
+
                 <button 
                   className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all group"
                   title="Add to Favorites"
@@ -272,7 +316,7 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={() => handleStartParty(selectedVideo)}
-                  disabled={isCreatingRoom}
+                  disabled={isCreatingRoom || createdRoomId}
                   className="flex-[1.5] bg-brand text-white font-black py-5 rounded-2xl hover:bg-brand-light active:scale-95 transition-all shadow-xl shadow-brand/20 flex items-center justify-center gap-3 disabled:opacity-50"
                 >
                   {isCreatingRoom ? (
@@ -280,7 +324,7 @@ export default function Dashboard() {
                   ) : (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                   )}
-                  Start Watch Party
+                  Host Party
                 </button>
               </div>
               <p className="text-center mt-6 text-[10px] uppercase font-black tracking-widest text-white/20">Private room link will be generated instantly</p>
