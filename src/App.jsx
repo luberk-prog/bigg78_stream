@@ -5,6 +5,7 @@ import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Search from './pages/Search'
 import WatchRoom from "./pages/WatchRoom";
+import Library from "./pages/Library";
 
 export default function App() {
   return (
@@ -15,6 +16,8 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/history" element={<Library />} />
+        <Route path="/favorites" element={<Library />} />
         <Route path="/watch/:id" element={<WatchRoom />} />
         <Route path="/room/:roomId" element={<WatchRoom />} />
       </Routes>

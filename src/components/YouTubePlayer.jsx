@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useWatchHistory } from '../hooks/useWatchHistory'
 
 export default function YouTubePlayer({ 
   videoId, 
@@ -8,6 +9,7 @@ export default function YouTubePlayer({
   onSyncStatusChange,
   onStateChange 
 }) {
+  const { updateProgress } = useWatchHistory()
   const playerRef = useRef(null)
   const containerRef = useRef(null)
   const isSyncing = useRef(false)
@@ -136,17 +138,22 @@ export default function YouTubePlayer({
     }
   }, [socket, playerReady, isHost])
 
-  // Track Time
+  // Track Time & Save Progress
   useEffect(() => {
     if (playerReady) {
       const interval = setInterval(() => {
         if (playerRef.current?.getCurrentTime) {
-          setCurrentTime(playerRef.current.getCurrentTime())
+          const time = playerRef.current.getCurrentTime()
+          setCurrentTime(time)
+          // Only auto-save if playing and it's a valid ID
+          if (isPlaying && videoId) {
+            updateProgress(videoId, time)
+          }
         }
-      }, 500)
+      }, 5000) // Save every 5 seconds
       return () => clearInterval(interval)
     }
-  }, [playerReady])
+  }, [playerReady, isPlaying, videoId, updateProgress])
 
   return (
     <div 

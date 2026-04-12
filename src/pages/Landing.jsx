@@ -17,8 +17,8 @@ export default function Landing() {
 
   if (user) navigate('/dashboard')
 
-  const scrollToFeatures = () => {
-    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToSection = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
@@ -63,7 +63,7 @@ export default function Landing() {
                 Get Started Free
               </button>
               <button 
-                onClick={scrollToFeatures}
+                onClick={() => scrollToSection('how-it-works')}
                 className="glass px-12 py-5 rounded-[2rem] text-lg font-bold border border-white/10 hover:bg-white/5 transition-all pointer-events-auto"
               >
                 Learn More
@@ -72,8 +72,39 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* How it Works Step-by-Step */}
+        <section id="how-it-works" className="max-w-7xl mx-auto px-6 py-32 border-t border-white/5 relative">
+          <div className="text-center mb-24">
+            <h2 className="text-4xl font-black mb-4 tracking-tight uppercase italic">How it <span className="text-brand">Works</span></h2>
+            <p className="text-white/40 font-bold tracking-widest uppercase text-[10px]">Three steps to cinematic collaboration</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-20 relative px-10">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden md:block absolute top-[40px] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            
+            <div className="relative group text-center">
+              <div className="w-20 h-20 rounded-[2.5rem] bg-brand text-white font-black text-2xl flex items-center justify-center mx-auto mb-10 shadow-3xl shadow-brand/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">1</div>
+              <h3 className="text-xl font-black mb-4 tracking-tight">Select Content</h3>
+              <p className="text-white/40 text-sm leading-relaxed">Browse millions of YouTube videos or search for your favorite trending content with zero effort.</p>
+            </div>
+
+            <div className="relative group text-center">
+              <div className="w-20 h-20 rounded-[2.5rem] bg-brand text-white font-black text-2xl flex items-center justify-center mx-auto mb-10 shadow-3xl shadow-brand/40 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">2</div>
+              <h3 className="text-xl font-black mb-4 tracking-tight">Host a Party</h3>
+              <p className="text-white/40 text-sm leading-relaxed">Click 'Start Watch Party' to create a private, high-fidelity room with ultra-low latency synchronization.</p>
+            </div>
+
+            <div className="relative group text-center">
+              <div className="w-20 h-20 rounded-[2.5rem] bg-brand text-white font-black text-2xl flex items-center justify-center mx-auto mb-10 shadow-3xl shadow-brand/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">3</div>
+              <h3 className="text-xl font-black mb-4 tracking-tight">Invite Friends</h3>
+              <p className="text-white/40 text-sm leading-relaxed">Share the room code instantly. Chat, react, and experience every cinematic moment in perfect sync.</p>
+            </div>
+          </div>
+        </section>
+
         {/* Features Section */}
-        <section id="features" className="max-w-7xl mx-auto px-6 py-32 grid grid-cols-1 md:grid-cols-3 gap-10">
+        <section id="features" className="max-w-7xl mx-auto px-6 py-32 grid grid-cols-1 md:grid-cols-3 gap-10 border-t border-white/5">
           <FeatureCard 
             title="Glassmorphic Design"
             desc="A stunning, translucent interface inspired by the future of computing, optimized for cinematic clarity."

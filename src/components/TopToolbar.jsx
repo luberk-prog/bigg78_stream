@@ -11,9 +11,8 @@ const CategoryTab = ({ label, active, onClick }) => (
   </button>
 )
 
-export default function TopToolbar() {
+export default function TopToolbar({ activeCat, setActiveCat }) {
   const navigate = useNavigate()
-  const [activeCat, setActiveCat] = useState('Trending')
   const { user } = useAuth()
   
   const categories = ['Trending', 'Gaming', 'Music', 'Live']

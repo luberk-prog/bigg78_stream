@@ -1,53 +1,86 @@
 import { useState, useCallback } from 'react';
 
-const STORAGE_KEY = 'bigg78_watch_history';
+const HISTORY_KEY = 'bigg78_watch_history_v2';
+const FAVORITES_KEY = 'bigg78_favorites';
 
 /**
- * Tracks the user's localized watch history to power intelligent recommendations without requiring an account.
+ * Tracks the user's watch history and favorite videos.
  */
 export function useWatchHistory() {
   const [history, setHistory] = useState(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(HISTORY_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
     }
   });
 
-  const addToHistory = useCallback((video) => {
-    if (!video || !video.title) return;
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const stored = localStorage.getItem(FAVORITES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
+  const saveToStorage = (key, data) => {
+    localStorage.setItem(key, JSON.stringify(data));
+  };
+
+  const addToHistory = useCallback((video, lastPosition = 0) => {
+    if (!video || (!video.id && !video.youtubeId)) return;
     setHistory((prev) => {
-      // Extract relevant phrasing by merging the title and the channel names
-      const rawText = `${video.title} ${video.channel || ''}`;
-      
-      // Perform primitive text filtering (drop special characters, strip short pronouns)
-      const words = rawText
-        .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .split(/\s+/)
-        .filter(w => w.length > 3);
-      
-      // Append the newly derived keywords onto existing history arrays unconditionally
-      let newHistory = [...words, ...prev];
-      
-      // Enforce an absolute deduplication of any redundant words using a Set
-      newHistory = [...new Set(newHistory)];
-      
-      // Aggressively slice out only the top 15 most recent words to keep the query compact for standard limits
-      newHistory = newHistory.slice(0, 15);
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
+      const videoId = video.youtubeId || video.id;
+      const filtered = prev.filter(item => (item.youtubeId || item.id) !== videoId);
+      const newItem = { ...video, lastPosition, updatedAt: new Date().toISOString() };
+      const newHistory = [newItem, ...filtered].slice(0, 20);
+      saveToStorage(HISTORY_KEY, newHistory);
+      return newHistory;
+    });
+  }, []);
+
+  const toggleFavorite = useCallback((video) => {
+    if (!video) return;
+    setFavorites((prev) => {
+      const videoId = video.youtubeId || video.id;
+      const exists = prev.find(item => (item.youtubeId || item.id) === videoId);
+      let newFavorites;
+      if (exists) {
+        newFavorites = prev.filter(item => (item.youtubeId || item.id) !== videoId);
+      } else {
+        newFavorites = [{ ...video, addedAt: new Date().toISOString() }, ...prev];
+      }
+      saveToStorage(FAVORITES_KEY, newFavorites);
+      return newFavorites;
+    });
+  }, []);
+
+  const isFavorite = useCallback((videoId) => {
+    return favorites.some(item => (item.youtubeId || item.id) === videoId);
+  }, [favorites]);
+
+  const updateProgress = useCallback((videoId, lastPosition) => {
+    setHistory((prev) => {
+      const newHistory = prev.map(item => {
+        if ((item.youtubeId || item.id) === videoId) {
+          return { ...item, lastPosition, updatedAt: new Date().toISOString() };
+        }
+        return item;
+      });
+      saveToStorage(HISTORY_KEY, newHistory);
       return newHistory;
     });
   }, []);
 
   const getRecommendationQuery = useCallback(() => {
     if (history.length === 0) return '';
-    // Select the absolute top 4 algorithmic buzzwords, pipe separating them for YouTube's Boolean logical "OR"
-    return history.slice(0, 4).join('|');
+    const keywords = history.slice(0, 3)
+      .map(v => v.title.split(' ').slice(0, 2).join(' '))
+      .join('|');
+    return keywords;
   }, [history]);
 
-  return { history, addToHistory, getRecommendationQuery };
+  return { history, favorites, toggleFavorite, isFavorite, addToHistory, updateProgress, getRecommendationQuery };
 }
