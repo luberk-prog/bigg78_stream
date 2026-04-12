@@ -1,54 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import Navbar from '../components/Navbar'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import Sidebar from '../components/Sidebar'
+import TopToolbar from '../components/TopToolbar'
 import VideoCard from '../components/VideoCard'
 import { searchYouTube, getTrending, hasApiKey } from '../lib/youtube'
 import { mockVideos } from '../data/mockVideos'
 
-const CATEGORIES = ['All', 'Movies', 'Gaming', 'Music', 'News', 'Sports', 'Technology']
-
-function SkeletonGrid() {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-      {Array.from({ length: 20 }).map((_, i) => (
-        <div key={i} className="w-full">
-          <div className="rounded-xl aspect-video skeleton" />
-          <div className="mt-2.5 space-y-2">
-            <div className="h-3 skeleton rounded w-5/6" />
-            <div className="h-3 skeleton rounded w-3/6" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ApiBanner({ message, type = 'warning' }) {
-  const colors = type === 'error'
-    ? 'bg-red-500/10 border-red-500/20 text-red-300'
-    : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300'
-  return (
-    <div className={`flex items-center gap-3 ${colors} border text-sm px-4 py-3 rounded-xl mb-6`}>
-      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-      </svg>
-      <span>{message}</span>
-    </div>
-  )
-}
+const CATEGORIES = ['Trending', 'Gaming', 'Music', 'Live', 'News', 'Tech']
 
 export default function Search() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const query = searchParams.get('q') || ''
-  const [activeTab, setActiveTab] = useState('All')
-  const [sortBy, setSortBy] = useState('relevance')
+  const [activeTab, setActiveTab] = useState('Trending')
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [apiError, setApiError] = useState('')
   const [nextPageToken, setNextPageToken] = useState('')
   const observerTarget = useRef(null)
-  const debounceRef = useRef(null)
 
   const doSearch = useCallback(async (q, isLoadMore = false) => {
     if (isLoadMore && !nextPageToken) return
@@ -58,7 +28,11 @@ export default function Search() {
     else setLoading(true)
 
     try {
-      if (!hasApiKey()) throw new Error('NO_API_KEY')
+      if (!hasApiKey()) {
+        if (!isLoadMore) setVideos(mockVideos)
+        setLoading(false)
+        return
+      }
       
       const res = q.trim() 
         ? await searchYouTube(q, 24, isLoadMore ? nextPageToken : '')
@@ -71,19 +45,17 @@ export default function Search() {
       }
       setNextPageToken(res.nextPageToken || '')
     } catch (err) {
-      if (err.message === 'NO_API_KEY') {
-        setApiError('YouTube API key not set. Showing mock content.')
-        if (!isLoadMore) setVideos(mockVideos)
-      } else {
-        setApiError(`Couldn't load results: ${err.message}`)
-      }
+      setApiError(`Couldn't load results: ${err.message}`)
     } finally {
       setLoading(false)
       setLoadingMore(false)
     }
   }, [nextPageToken])
 
-  // Infinite Scroll Observer
+  useEffect(() => {
+    doSearch(query)
+  }, [query])
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -93,157 +65,75 @@ export default function Search() {
       },
       { threshold: 1.0 }
     )
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
-    }
-
+    if (observerTarget.current) observer.observe(observerTarget.current)
     return () => observer.disconnect()
   }, [nextPageToken, loadingMore, loading, query, doSearch])
 
-  // Debounce search when query changes
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      doSearch(query)
-    }, 400)
-    return () => clearTimeout(debounceRef.current)
-  }, [query, doSearch])
-
-  // Apply client-side sort
-  const sortedVideos = [...videos].sort((a, b) => {
-    if (sortBy === 'views') {
-      const av = parseFloat(a.views) || 0
-      const bv = parseFloat(b.views) || 0
-      return bv - av
-    }
-    return 0
-  })
-
-  const trendingTags = ['Avengers', 'Gaming', 'Music', 'Science', 'Sports', 'Comedy', 'News', 'Travel']
-
   return (
-    <div className="min-h-screen bg-dark-900">
-      <Navbar />
-      <main className="max-w-screen-2xl mx-auto px-6 pt-24 pb-12">
+    <div className="min-h-screen cinematic-bg text-white relative">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-none" />
+      
+      <Sidebar />
+      <TopToolbar />
 
-        {/* Header */}
-        <div className="mb-8">
-          {query ? (
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                Results for <span className="text-gradient">"{query}"</span>
-              </h1>
-              <p className="text-white/40 text-sm mt-1">
-                {loading ? 'Searching…' : `${sortedVideos.length} videos found`}
-              </p>
-            </div>
-          ) : (
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {hasApiKey() ? <>Trending on <span className="text-gradient">YouTube</span></> : <>Browse <span className="text-gradient">All Content</span></>}
-              </h1>
-              <p className="text-white/40 text-sm mt-1">
-                {loading ? 'Loading…' : `${sortedVideos.length} videos`}
-              </p>
+      <main className="relative z-10 pl-32 pr-12 pt-32 pb-12 transition-all duration-700 max-w-[1920px] mx-auto">
+        {/* Results Header */}
+        <div className="mb-10 animate-fade-in-up">
+           <h1 className="text-3xl font-black tracking-tight mb-2">
+             {query ? `Results for "${query}"` : 'Explore Trending'}
+           </h1>
+           <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
+             {loading ? 'Scanning YouTube...' : `${videos.length} videos curated for you`}
+           </p>
+        </div>
+
+        {/* Categories Bar */}
+        <div className="flex items-center gap-3 mb-12 flex-wrap animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveTab(cat)}
+              className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                activeTab === cat
+                  ? 'bg-brand text-white border-brand shadow-lg shadow-brand/20'
+                  : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Results Grid */}
+        {loading && !videos.length ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-[2.5rem] aspect-video bg-white/5 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 animate-fade-in">
+            {videos.map((v, i) => (
+              <VideoCard 
+                key={`${v.id}-${i}`} 
+                video={v} 
+                onClick={(v) => navigate(`/watch/${v.youtubeId || v.id}`)} 
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Infinite Scroll Anchor */}
+        <div ref={observerTarget} className="h-40 flex items-center justify-center mt-12">
+          {loadingMore && (
+            <div className="flex items-center gap-3 glass px-6 py-3 rounded-2xl border border-white/10 animate-fade-in">
+              <div className="w-2 h-2 rounded-full bg-brand animate-bounce" />
+              <div className="w-2 h-2 rounded-full bg-brand animate-bounce" style={{ animationDelay: '0.2s' }} />
+              <div className="w-2 h-2 rounded-full bg-brand animate-bounce" style={{ animationDelay: '0.4s' }} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Fetching more excellence</span>
             </div>
           )}
         </div>
-
-        {/* API warning */}
-        {apiError && <ApiBanner message={apiError} />}
-
-        {/* Filters bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2 flex-wrap">
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveTab(cat)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  activeTab === cat
-                    ? 'bg-brand text-white shadow-lg shadow-brand/20'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="bg-dark-700 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-brand/50 cursor-pointer"
-          >
-            <option value="relevance">Sort: Relevance</option>
-            <option value="views">Sort: Most Viewed</option>
-          </select>
-        </div>
-
-        {/* Results */}
-        {loading ? (
-          <SkeletonGrid />
-        ) : sortedVideos.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-              {sortedVideos.map((v, i) => (
-                <div key={`${v.youtubeId || v.id}-${i}`} className="animate-fade-in-up" style={{ animationDelay: `${i % 20 * 0.05}s` }}>
-                  <VideoCard video={v} size="md" />
-                </div>
-              ))}
-            </div>
-            
-            {/* Infinite Scroll Indicator */}
-            <div ref={observerTarget} className="h-20 flex items-center justify-center mt-12">
-              {loadingMore && (
-                <div className="flex items-center gap-2 text-brand font-bold animate-pulse">
-                  <div className="w-2 h-2 rounded-full bg-brand" />
-                  <div className="w-2 h-2 rounded-full bg-brand" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2 h-2 rounded-full bg-brand" style={{ animationDelay: '0.4s' }} />
-                  <span className="ml-2 text-xs uppercase tracking-widest text-white/40">Loading more excellence...</span>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-32 text-center animate-scale-in">
-            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6">
-              <svg className="w-12 h-12 text-white/10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">No results found</h3>
-            <p className="text-white/40 text-sm max-w-sm leading-relaxed">
-              We couldn't find anything matching "{query}". <br />
-              Try different keywords or browse our trending content.
-            </p>
-            <button 
-              onClick={() => doSearch('')}
-              className="mt-8 btn-secondary px-6 py-2.5 text-sm"
-            >
-              View Trending
-            </button>
-          </div>
-        )}
-
-        {/* Trending tags (shown when no query) */}
-        {!query && !loading && (
-          <div className="mt-16">
-            <h2 className="section-title">Trending Searches</h2>
-            <div className="flex flex-wrap gap-2">
-              {trendingTags.map(tag => (
-                <a
-                  key={tag}
-                  href={`/search?q=${tag}`}
-                  className="px-4 py-2 bg-dark-700 border border-white/10 rounded-full text-sm text-white/60 hover:text-white hover:border-brand/40 hover:bg-brand/10 transition-all"
-                >
-                  #{tag}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
       </main>
     </div>
   )

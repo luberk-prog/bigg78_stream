@@ -68,7 +68,7 @@ export default function Dashboard() {
       <TopToolbar />
 
       <main className="relative z-10 pl-32 pr-12 pt-32 pb-12 transition-all duration-700 max-w-[1920px] mx-auto">
-        <div className="grid grid-cols-12 gap-10">
+        <div className="grid grid-cols-12 gap-8">
           
           {/* Left Lane: Navigation & Continued */}
           <div className="col-span-12 lg:col-span-3 flex flex-col gap-10 animate-fade-in-up">
@@ -78,21 +78,21 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-brand shadow-[0_0_10px_rgba(var(--brand-rgb),0.5)]" />
-                  Top 10 Series
+                  Trending Now
                 </h3>
                 <span className="text-[9px] text-white/30 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">Today</span>
               </div>
               <div className="space-y-6">
-                {(trending.length > 0 ? trending : mockVideos).slice(0, 3).map((v, i) => (
-                  <div key={v.id} onClick={() => navigate(`/watch/${v.youtubeId || v.id}`)} className="flex gap-4 cursor-pointer group active:scale-95 transition-all">
-                    <div className="relative w-20 h-28 rounded-xl overflow-hidden shadow-2xl shrink-0 group-hover:scale-105 transition-transform duration-500">
-                      <img src={v.thumbnail} className="w-full h-full object-cover" alt="" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-                      <span className="absolute bottom-[-4px] left-1 text-4xl font-black text-white/20 tracking-tighter italic select-none group-hover:text-brand/40 transition-colors">{i + 1}</span>
+                {(trending.length > 0 ? trending : mockVideos).slice(0, 5).map((v, i) => (
+                  <div key={v.id} onClick={() => navigate(`/watch/${v.youtubeId || v.id}`)} className="flex items-center gap-4 cursor-pointer group active:scale-95 transition-all">
+                    <div className="relative w-28 aspect-video rounded-xl overflow-hidden shadow-xl shrink-0 group-hover:scale-110 transition-transform duration-500 border border-white/5">
+                      <img src={v.thumbnail} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="" />
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-brand/40 shadow-[0_0_10px_rgba(var(--brand-rgb),0.5)]" />
+                      <span className="absolute bottom-1 right-2 text-[8px] font-black text-white/40 tracking-tighter italic select-none group-hover:text-brand/60 transition-colors uppercase">{i + 1}</span>
                     </div>
                     <div className="flex flex-col justify-center min-w-0">
-                      <h4 className="text-xs font-bold leading-tight group-hover:text-brand-light transition-colors line-clamp-2">{v.title}</h4>
-                      <p className="text-[9px] text-white/30 mt-1.5 uppercase tracking-widest truncate">{v.channel}</p>
+                      <h4 className="text-[11px] font-bold leading-tight group-hover:text-brand-light transition-colors line-clamp-2">{v.title}</h4>
+                      <p className="text-[9px] text-white/30 mt-1 uppercase tracking-widest truncate">{v.channel}</p>
                     </div>
                   </div>
                 ))}
@@ -158,8 +158,7 @@ export default function Dashboard() {
                       {heroVideo.title}
                     </h1>
                     <div className="flex items-center gap-3 mb-8">
-                       <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white/70 border border-white/10">Suspense</span>
-                       <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white/70 border border-white/10">Thriller</span>
+                       <span className="bg-brand/20 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-brand-light border border-brand/20">Featured</span>
                        <span className="text-white/40 text-[11px] ml-1 font-bold tracking-tight">{heroVideo.channel}</span>
                     </div>
                     <p className="text-white/60 text-base mb-10 line-clamp-2 max-w-xl leading-relaxed drop-shadow-md font-medium">
@@ -171,11 +170,7 @@ export default function Dashboard() {
                         className="bg-white text-black font-black px-10 py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all flex items-center gap-3 shadow-[0_20px_50px_rgba(255,255,255,0.2)]"
                       >
                         <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"/></svg>
-                        Play Now
-                      </button>
-                      <button className="bg-white/10 backdrop-blur-md border border-white/10 px-10 py-4 rounded-2xl hover:bg-white/20 active:scale-95 transition-all text-white font-bold tracking-tight flex items-center gap-3">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Download
+                        Watch Now
                       </button>
                       <button className="bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-2xl hover:bg-white/20 transition-all text-white/50 hover:text-white">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
@@ -202,9 +197,13 @@ export default function Dashboard() {
                 <h2 className="text-2xl font-black tracking-tight text-white/90">You might like</h2>
                 <button className="bg-white/5 backdrop-blur-md px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-all border border-white/10">See all content</button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-                {row2.slice(0, 4).map(v => (
-                  <VideoCard key={v.id} video={v} size="lg" layout="portrait" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {row2.slice(0, 4).map((v) => (
+                  <VideoCard 
+                    key={v.id} 
+                    video={v} 
+                    onClick={(v) => navigate(`/watch/${v.youtubeId || v.id}`)} 
+                  />
                 ))}
               </div>
             </section>

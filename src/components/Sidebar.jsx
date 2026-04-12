@@ -36,9 +36,9 @@ export default function Sidebar() {
         </svg>
       </SidebarIcon>
 
-      <SidebarIcon to="/downloads" active={pathname === '/downloads'}>
+      <SidebarIcon to="/history" active={pathname === '/history'}>
         <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </SidebarIcon>
 
