@@ -81,22 +81,24 @@ function formatViews(n) {
  * Search YouTube videos by query
  * @param {string} query
  * @param {number} maxResults
- * @returns {Promise<Array>} normalized video objects
+ * @param {string} pageToken
+ * @returns {Promise<{items: Array, nextPageToken: string}>}
  */
-export async function searchYouTube(query, maxResults = 24) {
+export async function searchYouTube(query, maxResults = 24, pageToken = '') {
   if (!API_KEY || API_KEY === 'YOUR_YOUTUBE_API_KEY_HERE') {
     throw new Error('NO_API_KEY')
   }
-  if (!query?.trim()) return []
+  if (!query?.trim()) return { items: [], nextPageToken: '' }
 
   const url = new URL(`${BASE_URL}/search`)
   url.searchParams.set('part', 'snippet')
   url.searchParams.set('q', query.trim())
   url.searchParams.set('type', 'video')
-  url.searchParams.set('videoEmbeddable', 'true')
+  url.searchParams.set('videoEmbeddable', 'true') // Strictly enforce
   url.searchParams.set('maxResults', String(maxResults))
   url.searchParams.set('safeSearch', 'moderate')
   url.searchParams.set('key', API_KEY)
+  if (pageToken) url.searchParams.set('pageToken', pageToken)
 
   const res = await fetch(url.toString())
   if (!res.ok) {
@@ -104,16 +106,20 @@ export async function searchYouTube(query, maxResults = 24) {
     throw new Error(err?.error?.message || `HTTP ${res.status}`)
   }
   const data = await res.json()
-  return (data.items || []).map(normalizeSearchItem)
+  return {
+    items: (data.items || []).map(normalizeSearchItem),
+    nextPageToken: data.nextPageToken || ''
+  }
 }
 
 /**
  * Get trending / most popular videos
  * @param {number} maxResults
- * @param {string} regionCode e.g. 'US'
- * @returns {Promise<Array>} normalized video objects
+ * @param {string} pageToken
+ * @param {string} regionCode
+ * @returns {Promise<{items: Array, nextPageToken: string}>}
  */
-export async function getTrending(maxResults = 24, regionCode = 'US') {
+export async function getTrending(maxResults = 24, pageToken = '', regionCode = 'US') {
   if (!API_KEY || API_KEY === 'YOUR_YOUTUBE_API_KEY_HERE') {
     throw new Error('NO_API_KEY')
   }
@@ -122,8 +128,10 @@ export async function getTrending(maxResults = 24, regionCode = 'US') {
   url.searchParams.set('part', 'snippet,contentDetails,statistics')
   url.searchParams.set('chart', 'mostPopular')
   url.searchParams.set('regionCode', regionCode)
+  url.searchParams.set('videoEmbeddable', 'true') // Strictly enforce where possible
   url.searchParams.set('maxResults', String(maxResults))
   url.searchParams.set('key', API_KEY)
+  if (pageToken) url.searchParams.set('pageToken', pageToken)
 
   const res = await fetch(url.toString())
   if (!res.ok) {
@@ -131,7 +139,10 @@ export async function getTrending(maxResults = 24, regionCode = 'US') {
     throw new Error(err?.error?.message || `HTTP ${res.status}`)
   }
   const data = await res.json()
-  return (data.items || []).map(normalizeVideoItem)
+  return {
+    items: (data.items || []).map(normalizeVideoItem),
+    nextPageToken: data.nextPageToken || ''
+  }
 }
 
 /**

@@ -16,21 +16,14 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 0px;
+    height: 0px;
+    display: none;
   }
 
-  ::-webkit-scrollbar-track {
-    background: #111118;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #3d3d55;
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #7c3aed;
+  * {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
 
@@ -69,9 +62,12 @@
   }
 
   .scroll-row {
-    @apply flex gap-4 overflow-x-auto pb-4;
+    @apply flex gap-5 overflow-x-auto pb-8 pt-2 px-1;
     -ms-overflow-style: none;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+  }
+  .scroll-row::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-link {

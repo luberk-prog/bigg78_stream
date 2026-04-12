@@ -146,15 +146,15 @@ export default function WatchRoom() {
         const isYouTubeId = /^[a-zA-Z0-9_-]{11}$/.test(currentVideoId)
 
         if (isYouTubeId && hasApiKey()) {
-          const [detail, searchResults] = await Promise.all([
+          const [detail, searchRes] = await Promise.all([
             getVideoById(currentVideoId),
-            searchYouTube(currentVideoId, 8).catch(() => []),
+            searchYouTube(currentVideoId, 12).catch(() => ({ items: [] })),
           ])
           if (cancelled) return
           if (detail) {
             setVideo(detail)
             addToHistory(detail)
-            setRelated(searchResults.filter(v => v.youtubeId !== currentVideoId).slice(0, 6))
+            setRelated((searchRes.items || []).filter(v => v.youtubeId !== currentVideoId))
           } else {
             throw new Error('Video not found')
           }
@@ -225,8 +225,8 @@ export default function WatchRoom() {
     if (!searchQuery.trim() || !hasApiKey()) return;
     setLoading(true);
     try {
-      const results = await searchYouTube(searchQuery, 12);
-      setRelated(results.filter(v => v.youtubeId !== playerVideoId));
+      const res = await searchYouTube(searchQuery, 20);
+      setRelated(res.items.filter(v => v.youtubeId !== playerVideoId));
     } catch (err) {
       setApiError('Search failed. Using mock content.');
     } finally {
@@ -341,14 +341,14 @@ export default function WatchRoom() {
           )}
 
           {/* YouTube Player */}
-          <div className={`w-full bg-dark-950 border-b border-white/5 flex justify-center transition-all duration-500 ${isTheaterMode ? 'px-0 py-0' : 'px-0 sm:px-6'}`}>
+          <div className={`w-full bg-black flex justify-center transition-all duration-500 ${isTheaterMode ? 'px-0 py-0' : 'px-0 lg:px-6'}`}>
             {loading ? (
               <div
-                className={`w-full aspect-video skeleton transition-all duration-500 ${isTheaterMode ? '' : 'sm:my-4 sm:rounded-xl'}`}
-                style={{ maxHeight: isTheaterMode ? '85vh' : '75vh', maxWidth: isTheaterMode ? '100vw' : 'calc(75vh * 16 / 9)' }}
+                className={`w-full aspect-video skeleton transition-all duration-500 ${isTheaterMode ? '' : 'lg:my-6 lg:rounded-2xl'}`}
+                style={{ maxHeight: '90vh', maxWidth: '100%' }}
               />
             ) : (
-              <div ref={fullScreenRef} className={`relative w-full flex justify-center group transition-all duration-500 ${isFullscreen ? 'bg-black' : ''}`} style={{ maxHeight: isFullscreen ? '100vh' : (isTheaterMode ? '85vh' : '75vh'), maxWidth: isFullscreen ? '100vw' : (isTheaterMode ? '100vw' : 'calc(75vh * 16 / 9)') }}>
+              <div ref={fullScreenRef} className={`relative w-full flex justify-center group transition-all duration-500 ${isFullscreen ? 'bg-black' : ''}`} style={{ height: isFullscreen ? '100vh' : (isTheaterMode ? '90vh' : '88vh'), maxWidth: '100%' }}>
                 <YouTubePlayer
                   videoId={playerVideoId}
                   socket={socket}

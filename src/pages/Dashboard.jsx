@@ -21,11 +21,10 @@ function SkeletonCard({ wide }) {
   )
 }
 
-function VideoRow({ title, videos, loading, size, icon }) {
+function VideoRow({ title, videos, loading, size }) {
   return (
-    <section>
-      <h2 className="section-title">
-        {icon && <span className="text-lg">{icon}</span>}
+    <section className="py-2">
+      <h2 className="text-xl font-black text-white/90 mb-4 px-1 uppercase tracking-wider">
         {title}
       </h2>
       <div className="scroll-row">
@@ -62,29 +61,24 @@ export default function Dashboard() {
   const [recommended, setRecommended] = useState([])
   const [loadingTrending, setLoadingTrending] = useState(true)
   const [apiError, setApiError] = useState('')
-
-  // Fallback mock videos split into rows
-  const mockTrending = mockVideos.filter(v => v.category === 'trending')
-  const mockRecommended = mockVideos.filter(v => v.category === 'recommended')
-  const mockWatchAgain = mockVideos.filter(v => v.category === 'watch_again')
-
-  const heroVideo = trending[0] || mockVideos[1]
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0)
 
   const fetchTrending = useCallback(async () => {
     if (!hasApiKey()) {
-      setApiError('Add your YouTube API key to .env (VITE_YOUTUBE_API_KEY) to load real content.')
+      setApiError('Add your YouTube API key to load real content.')
       setLoadingTrending(false)
       return
     }
     try {
-      const trendReq = getTrending(24)
+      // Fetch more for the carousel and rows
+      const trendReq = getTrending(50)
       
       const recQuery = getRecommendationQuery()
-      let recReq = recQuery ? searchYouTube(recQuery, 8) : null;
+      let recReq = recQuery ? searchYouTube(recQuery, 10) : null;
       
       const [trendRes, recRes] = await Promise.all([trendReq, recReq || trendReq])
-      setTrending(trendRes)
-      setRecommended(recReq ? recRes : [])
+      setTrending(trendRes.items || [])
+      setRecommended(recReq ? (recRes.items || []) : [])
     } catch (err) {
       if (err.message === 'NO_API_KEY') {
         setApiError('Add your YouTube API key to .env (VITE_YOUTUBE_API_KEY) to load real content.')
@@ -94,14 +88,26 @@ export default function Dashboard() {
     } finally {
       setLoadingTrending(false)
     }
-  }, [])
+  }, [getRecommendationQuery])
 
   useEffect(() => { fetchTrending() }, [fetchTrending])
 
+  // Hero carousel timer
+  useEffect(() => {
+    if (trending.length > 0) {
+      const interval = setInterval(() => {
+        setActiveHeroIndex(prev => (prev + 1) % Math.min(trending.length, 10))
+      }, 8000)
+      return () => clearInterval(interval)
+    }
+  }, [trending.length])
+
   // Split trending into rows
-  const row1 = trending.length > 0 ? trending.slice(0, 8) : mockTrending
-  const row2 = recommended.length > 0 ? recommended : (trending.length > 0 ? trending.slice(8, 16) : mockRecommended)
-  const row3 = trending.length > 0 ? trending.slice(16, 24) : mockWatchAgain
+  const row1 = trending.length > 0 ? trending.slice(0, 15) : mockTrending
+  const row2 = recommended.length > 0 ? recommended : (trending.length > 0 ? trending.slice(15, 30) : mockRecommended)
+  const row3 = trending.length > 0 ? trending.slice(30, 45) : mockWatchAgain
+  const heroVideos = trending.length > 0 ? trending.slice(0, 10) : [mockVideos[1]]
+  const heroVideo = heroVideos[activeHeroIndex] || heroVideos[0]
   const isLoading = loadingTrending
 
   const joinRoom = (e) => {
@@ -122,67 +128,84 @@ export default function Dashboard() {
     <div className="min-h-screen bg-dark-900">
       <Navbar />
 
-      {/* Hero Banner */}
-      <section className="relative pt-16 h-[70vh] min-h-[500px] flex items-end overflow-hidden">
+      {/* Hero Banner Carousel */}
+      <section className="relative h-[85vh] min-h-[600px] flex items-end overflow-hidden">
         {isLoading ? (
           <div className="absolute inset-0 skeleton" />
         ) : (
-          <img
-            src={heroThumbnail}
-            alt={heroVideo.title}
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={e => { e.target.style.display = 'none' }}
-          />
+          <div className="absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out">
+            <img
+              key={heroVideo.id}
+              src={heroVideo.youtubeId
+                ? `https://i.ytimg.com/vi/${heroVideo.youtubeId}/maxresdefault.jpg`
+                : heroVideo.thumbnail?.replace('480/270', '1200/675') || ''
+              }
+              alt={heroVideo.title}
+              className="absolute inset-0 w-full h-full object-cover animate-scale-in"
+              onError={e => { e.target.src = heroVideo.thumbnail || '' }}
+            />
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-dark-900 via-dark-900/70 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-dark-900/30" />
+        
+        {/* Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent" />
 
-        <div className="relative z-10 max-w-screen-2xl mx-auto px-6 pb-12 w-full">
-          <div className="max-w-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
-                {hasApiKey() ? 'TRENDING' : 'FEATURED'}
-              </span>
-              <span className="text-white/50 text-sm">{heroVideo.channel}</span>
+        <div className="relative z-10 max-w-screen-2xl mx-auto px-6 pb-24 w-full">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 mb-4 animate-fade-in-up">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/10 backdrop-blur-md border border-white/10">
+                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-white">Live Trending</span>
+              </div>
+              <span className="text-white/40 text-xs font-medium uppercase tracking-[0.2em]">{heroVideo.channel}</span>
             </div>
+            
             {isLoading ? (
-              <div className="space-y-3">
-                <div className="h-10 skeleton rounded w-3/4" />
+              <div className="space-y-4">
+                <div className="h-14 skeleton rounded-lg w-3/4" />
                 <div className="h-4 skeleton rounded w-full" />
                 <div className="h-4 skeleton rounded w-4/5" />
               </div>
             ) : (
-              <>
-                <h1 className="text-4xl sm:text-5xl font-black text-white mb-3 leading-tight line-clamp-2">
+              <div className="animate-fade-in-up">
+                <h1 className="text-5xl sm:text-7xl font-black text-white mb-6 leading-[1.1] tracking-tight drop-shadow-2xl">
                   {heroVideo.title}
                 </h1>
-                <p className="text-white/60 text-sm mb-6">
-                  {heroVideo.description
-                    ? heroVideo.description.slice(0, 140) + '…'
-                    : 'The acclaimed title beloved worldwide.'}
-                  {heroVideo.duration && (
-                    <span className="ml-2 text-white/40">{heroVideo.duration}</span>
-                  )}
-                  {heroVideo.views && (
-                    <span className="ml-1 text-white/40">· {heroVideo.views} views</span>
-                  )}
+                <p className="text-white/70 text-lg mb-8 line-clamp-3 max-w-xl leading-relaxed drop-shadow-lg">
+                  {heroVideo.description || 'Experience the next level of collaborative watching. Join thousands already streaming together in high definition.'}
                 </p>
-                <div className="flex items-center gap-3">
-                  <button onClick={watchHero} className="btn-primary flex items-center gap-2 px-7 py-3">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                    </svg>
-                    Watch Now
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => navigate(`/watch/${heroVideo.youtubeId || heroVideo.id}`)}
+                    className="group bg-white text-black font-bold px-8 py-4 rounded-md hover:bg-white/90 transition-all flex items-center gap-3"
+                  >
+                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"/></svg>
+                    <span>Play Now</span>
                   </button>
-                  <button onClick={() => setShowRoomModal(true)} className="btn-secondary flex items-center gap-2 px-6 py-3">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <button 
+                    onClick={() => setShowRoomModal(true)}
+                    className="bg-dark-600/40 backdrop-blur-md text-white font-bold px-8 py-4 rounded-md hover:bg-dark-600/60 transition-all border border-white/10 flex items-center gap-3"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                    Watch Party
+                    <span>Create Room</span>
                   </button>
                 </div>
-              </>
+              </div>
             )}
+          </div>
+
+          {/* Carousel dots */}
+          <div className="absolute right-6 bottom-24 flex flex-col gap-2">
+            {heroVideos.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveHeroIndex(i)}
+                className={`w-1 h-8 rounded-full transition-all duration-500 ${i === activeHeroIndex ? 'bg-white h-12' : 'bg-white/20'}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -198,7 +221,7 @@ export default function Dashboard() {
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             Active Watch Rooms
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-3">
+          <div className="scroll-row">
             {mockRooms.map(room => (
               <div
                 key={room.id}

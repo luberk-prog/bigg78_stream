@@ -9,9 +9,9 @@ export default function ChatSidebar({ roomId, socket, user, isOriginHost, partic
   const promoteUser = (id) => { if(isOriginHost) socket?.emit('promote-user', roomId, id); }
 
   return (
-    <div className="flex flex-col h-full bg-dark-800 border-l border-white/5">
-      {/* Header Tabs */}
-      <div className="flex border-b border-white/5 shrink-0 bg-dark-900 px-6 py-4 items-center justify-between">
+    <div className="flex flex-col h-[500px] bg-black/20 overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 flex items-center justify-between">
          <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
             Active Members

@@ -44,42 +44,62 @@ export default function Search() {
   const [sortBy, setSortBy] = useState('relevance')
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [apiError, setApiError] = useState('')
+  const [nextPageToken, setNextPageToken] = useState('')
+  const observerTarget = useRef(null)
   const debounceRef = useRef(null)
 
-  const doSearch = useCallback(async (q) => {
+  const doSearch = useCallback(async (q, isLoadMore = false) => {
+    if (isLoadMore && !nextPageToken) return
+    
     setApiError('')
-    setLoading(true)
+    if (isLoadMore) setLoadingMore(true)
+    else setLoading(true)
+
     try {
-      if (!hasApiKey()) {
-        throw new Error('NO_API_KEY')
-      }
-      let results
-      if (q.trim()) {
-        results = await searchYouTube(q, 24)
+      if (!hasApiKey()) throw new Error('NO_API_KEY')
+      
+      const res = q.trim() 
+        ? await searchYouTube(q, 24, isLoadMore ? nextPageToken : '')
+        : await getTrending(24, isLoadMore ? nextPageToken : '')
+      
+      if (isLoadMore) {
+        setVideos(prev => [...prev, ...res.items])
       } else {
-        results = await getTrending(24)
+        setVideos(res.items)
       }
-      setVideos(results)
+      setNextPageToken(res.nextPageToken || '')
     } catch (err) {
       if (err.message === 'NO_API_KEY') {
-        setApiError('YouTube API key not set. Add VITE_YOUTUBE_API_KEY to your .env file. Showing mock content.')
-        // Fall back to mock data filtered by query
-        const mock = query
-          ? mockVideos.filter(v =>
-            v.title.toLowerCase().includes(query.toLowerCase()) ||
-            v.channel.toLowerCase().includes(query.toLowerCase())
-          )
-          : mockVideos
-        setVideos(mock)
+        setApiError('YouTube API key not set. Showing mock content.')
+        if (!isLoadMore) setVideos(mockVideos)
       } else {
         setApiError(`Couldn't load results: ${err.message}`)
-        setVideos(mockVideos)
       }
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
-  }, [query])
+  }, [nextPageToken])
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && nextPageToken && !loadingMore && !loading) {
+          doSearch(query, true)
+        }
+      },
+      { threshold: 1.0 }
+    )
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current)
+    }
+
+    return () => observer.disconnect()
+  }, [nextPageToken, loadingMore, loading, query, doSearch])
 
   // Debounce search when query changes
   useEffect(() => {
@@ -165,13 +185,27 @@ export default function Search() {
         {loading ? (
           <SkeletonGrid />
         ) : sortedVideos.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-            {sortedVideos.map((v, i) => (
-              <div key={v.youtubeId || v.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                <VideoCard video={v} size="md" />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
+              {sortedVideos.map((v, i) => (
+                <div key={`${v.youtubeId || v.id}-${i}`} className="animate-fade-in-up" style={{ animationDelay: `${i % 20 * 0.05}s` }}>
+                  <VideoCard video={v} size="md" />
+                </div>
+              ))}
+            </div>
+            
+            {/* Infinite Scroll Indicator */}
+            <div ref={observerTarget} className="h-20 flex items-center justify-center mt-12">
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-brand font-bold animate-pulse">
+                  <div className="w-2 h-2 rounded-full bg-brand" />
+                  <div className="w-2 h-2 rounded-full bg-brand" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 rounded-full bg-brand" style={{ animationDelay: '0.4s' }} />
+                  <span className="ml-2 text-xs uppercase tracking-widest text-white/40">Loading more excellence...</span>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center animate-scale-in">
             <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6">

@@ -28,7 +28,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-[60] bg-dark-900/80 backdrop-blur-xl border-b border-white/5">
+      <nav className="fixed top-0 left-0 right-0 z-[60] bg-black/95 backdrop-blur-2xl">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4 sm:gap-6">
           {/* Mobile Menu Toggle */}
           <button 
@@ -98,8 +98,8 @@ export default function Navbar() {
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-dark-800 border border-white/10 rounded-xl shadow-xl overflow-hidden py-1 z-50 animate-scale-in origin-top-right">
-                    <div className="px-4 py-3 border-b border-white/10">
+                  <div className="absolute right-0 mt-2 w-48 bg-dark-800 rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-scale-in origin-top-right">
+                    <div className="px-4 py-3 bg-white/5">
                       <p className="text-sm font-semibold text-white truncate">{user.name}</p>
                       <p className="text-xs text-white/50 truncate">{user.email}</p>
                     </div>
