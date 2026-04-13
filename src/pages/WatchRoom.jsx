@@ -193,14 +193,20 @@ export default function WatchRoom() {
         {/* Left Aspect-Locked Video Column */}
         <div className="flex-[3] flex flex-col min-w-0">
           <div className="relative w-full aspect-video rounded-[2.5rem] overflow-hidden shadow-3xl border border-white/10 bg-black animate-fade-in group">
-            <YouTubePlayer
-              videoId={playerVideoId}
-              socket={socket}
-              roomId={paramRoomId}
-              isHost={hasPlaybackControl}
-              onSyncStatusChange={setSyncStatus}
-              onStateChange={(s) => setIsVideoEnded(s === 0)}
-            />
+            {playerVideoId ? (
+              <YouTubePlayer
+                videoId={playerVideoId}
+                socket={socket}
+                roomId={paramRoomId}
+                isHost={hasPlaybackControl}
+                onSyncStatusChange={setSyncStatus}
+                onStateChange={(s) => setIsVideoEnded(s === 0)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-dark-900">
+                <div className="w-10 h-10 border-2 border-brand/50 border-t-brand rounded-full animate-spin" />
+              </div>
+            )}
             {/* Global Chat Overlay Inside Player for Immersive Feel */}
             <GlassChat
               roomId={paramRoomId}

@@ -80,6 +80,17 @@ export default function YouTubePlayer({
     socket?.emit('seek', roomId, newTime) // Reuse seek event for simplicity
   }
 
+  const videoIdRef = useRef(videoId)
+  const isHostRef = useRef(isHost)
+  const roomIdRef = useRef(roomId)
+
+  useEffect(() => {
+    videoIdRef.current = videoId
+    isHostRef.current = isHost
+    roomIdRef.current = roomId
+  }, [videoId, isHost, roomId])
+
+  // Single Effect for API Loading
   useEffect(() => {
     if (!window.YT) {
       const tag = document.createElement('script')
@@ -87,21 +98,29 @@ export default function YouTubePlayer({
       const firstScriptTag = document.getElementsByTagName('script')[0]
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
     }
+  }, [])
 
+  // Single Effect for Player Mounting
+  useEffect(() => {
+    let internalPlayer = null
+    
     const initPlayer = () => {
-      playerRef.current = new window.YT.Player(containerRef.current, {
-        videoId: videoId,
+      if (!containerRef.current || internalPlayer) return
+      
+      internalPlayer = new window.YT.Player(containerRef.current, {
+        videoId: videoIdRef.current,
         playerVars: {
           autoplay: 1,
-          controls: 0, // Disable native
+          controls: 0,
           rel: 0,
           modestbranding: 1,
           fs: 0,
-          disablekb: 0, // Always allow KB if rendering our custom UI? Actually better to control:
+          disablekb: 0,
           iv_load_policy: 3
         },
         events: {
           onReady: (event) => {
+            playerRef.current = event.target
             setPlayerReady(true)
             setDuration(event.target.getDuration())
             event.target.setVolume(volume)
@@ -110,12 +129,12 @@ export default function YouTubePlayer({
             if (onStateChange) onStateChange(event.data)
             setIsPlaying(event.data === window.YT.PlayerState.PLAYING)
             
-            if (isHost && !isSyncing.current) {
+            if (isHostRef.current && !isSyncing.current) {
               const time = event.target.getCurrentTime()
               if (event.data === window.YT.PlayerState.PLAYING) {
-                socket?.emit('play', roomId, time)
+                socket?.emit('play', roomIdRef.current, time)
               } else if (event.data === window.YT.PlayerState.PAUSED) {
-                socket?.emit('pause', roomId, time)
+                socket?.emit('pause', roomIdRef.current, time)
               }
             }
           }
@@ -126,13 +145,31 @@ export default function YouTubePlayer({
     if (window.YT && window.YT.Player) {
       initPlayer()
     } else {
-      window.onYouTubeIframeAPIReady = initPlayer
+      const prevCbk = window.onYouTubeIframeAPIReady
+      window.onYouTubeIframeAPIReady = () => {
+        if (prevCbk) prevCbk()
+        initPlayer()
+      }
     }
 
     return () => {
-      if (playerRef.current) playerRef.current.destroy()
+      if (internalPlayer?.destroy) {
+        internalPlayer.destroy()
+        playerRef.current = null
+        setPlayerReady(false)
+      }
     }
-  }, [videoId, isHost, roomId, socket])
+  }, []) // Mount ONLY once
+
+  // Handle Video Switching without Unmounting
+  useEffect(() => {
+    if (playerReady && videoId && playerRef.current?.loadVideoById) {
+      const currentId = playerRef.current.getVideoData?.()?.video_id
+      if (currentId !== videoId) {
+        playerRef.current.loadVideoById(videoId)
+      }
+    }
+  }, [videoId, playerReady])
 
   // Sync state
   useEffect(() => {
