@@ -40,7 +40,7 @@ export default function WatchRoom() {
 
   const isHost = Boolean(user?.email && roomData?.host === user.email)
   const isCoHost = participants.find(p => p.socketId === socket?.id)?.role === 'co-host'
-  const hasPlaybackControl = isHost || isCoHost
+  const hasPlaybackControl = !paramRoomId || isHost || isCoHost
 
   useEffect(() => {
     const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement)

@@ -6,16 +6,50 @@ export default function GlassChat({ roomId, socket, user, participants }) {
   const [isIdle, setIsIdle] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const bottomRef = useRef(null);
-  const idleTimeout = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
 
-  // Manage logic to dynamically fade the chatbox so it doesn't obstruct the video natively
+  // Manage logic to dynamically fade the chatbox
   const resetIdleTimer = () => {
     setIsIdle(false);
     if (idleTimeout.current) clearTimeout(idleTimeout.current);
     idleTimeout.current = setTimeout(() => {
-       if (!isActive) setIsIdle(true);
+       if (!isActive && !isDragging) setIsIdle(true);
     }, 5000);
   };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    dragStart.current = { 
+      x: e.clientX - position.x, 
+      y: e.clientY - position.y 
+    };
+    resetIdleTimer();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      const newX = e.clientX - dragStart.current.x;
+      const newY = e.clientY - dragStart.current.y;
+      setPosition({ x: newX, y: newY });
+      resetIdleTimer();
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   useEffect(() => {
     resetIdleTimer();
@@ -63,12 +97,28 @@ export default function GlassChat({ roomId, socket, user, participants }) {
 
   return (
     <div 
-      className={`absolute bottom-6 left-6 z-[100] w-72 sm:w-80 transition-all duration-700 ease-in-out pointer-events-auto ${isIdle && !isActive && input.length === 0 ? 'opacity-20 translate-y-2' : 'opacity-100 translate-y-0'}`}
+      className={`absolute bottom-6 left-6 z-[100] w-72 sm:w-80 transition-opacity duration-700 ease-in-out pointer-events-auto ${isIdle && !isActive && input.length === 0 ? 'opacity-20 ' : 'opacity-100'}`}
+      style={{
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        cursor: isDragging ? 'grabbing' : 'auto'
+      }}
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
     >
       <div className="flex flex-col bg-dark-900/40 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
         
+        {/* Drag Handle */}
+        <div 
+          onMouseDown={handleMouseDown}
+          className="h-8 bg-white/5 border-b border-white/5 flex items-center justify-center cursor-grab active:cursor-grabbing group"
+        >
+           <div className="flex gap-1">
+              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-brand transition-colors" />
+              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-brand transition-colors" />
+              <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-brand transition-colors" />
+           </div>
+        </div>
+
         {/* Messages Layout */}
         <div className="max-h-60 overflow-y-auto px-4 py-4 space-y-3 flex flex-col pointer-events-auto" style={{ scrollbarWidth: 'none' }}>
           {messages.map((msg, i) => (
