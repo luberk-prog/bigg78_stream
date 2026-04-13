@@ -83,18 +83,30 @@ export default function YouTubePlayer({
   }
 
   const handleFullscreen = () => {
-    const el = containerRef.current?.parentElement // The black group div
-    if (!el) return
-    
-    if (document.fullscreenElement) {
-      document.exitFullscreen()
+    const el = containerRef.current?.parentElement; // Target the custom player wrapper
+    if (!el) return;
+
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+    if (isFullscreen) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
     } else {
       if (el.requestFullscreen) {
-        el.requestFullscreen()
+        el.requestFullscreen();
       } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen()
+        el.webkitRequestFullscreen();
+      } else if (el.mozRequestFullScreen) {
+        el.mozRequestFullScreen();
       } else if (el.msRequestFullscreen) {
-        el.msRequestFullscreen()
+        el.msRequestFullscreen();
       }
     }
   }

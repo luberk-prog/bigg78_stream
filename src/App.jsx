@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Search from './pages/Search'
 import WatchRoom from "./pages/WatchRoom";
 import Library from "./pages/Library";
+import Profile from './pages/Profile';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/search" element={<Search />} />
         <Route path="/history" element={<Library />} />
         <Route path="/favorites" element={<Library />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/watch/:id" element={<WatchRoom />} />
         <Route path="/room/:roomId" element={<WatchRoom />} />
       </Routes>

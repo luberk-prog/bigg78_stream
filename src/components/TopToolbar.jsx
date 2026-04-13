@@ -57,12 +57,17 @@ export default function TopToolbar({ activeCat, setActiveCat }) {
           </svg>
           <span className="absolute top-2 right-2 w-2 h-2 bg-brand rounded-full border border-dark-900" />
         </button>
-        <div className="w-10 h-10 rounded-full border-2 border-white/10 overflow-hidden shadow-lg cursor-pointer hover:border-brand transition-all">
-          <img 
-            src={user?.photoURL || `https://i.pravatar.cc/100?u=${user?.email || 'guest'}`} 
-            alt="Profile" 
-            className="w-full h-full object-cover" 
-          />
+        <div 
+          onClick={() => navigate('/profile')}
+          className="w-10 h-10 rounded-[14px] overflow-hidden shadow-lg border border-white/20 cursor-pointer hover:border-brand hover:shadow-brand/20 transition-all flex items-center justify-center bg-black/40"
+        >
+          {user?.photoURL ? (
+            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-sm font-black uppercase text-brand-light">
+              {user?.name?.[0] || user?.email?.[0] || 'G'}
+            </span>
+          )}
         </div>
       </div>
     </div>
