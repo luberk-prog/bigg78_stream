@@ -9,6 +9,7 @@ export default function GlassChat({ roomId, socket, user, participants }) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
+  const idleTimeout = useRef(null);
 
   // Manage logic to dynamically fade the chatbox
   const resetIdleTimer = () => {
