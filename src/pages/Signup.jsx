@@ -23,7 +23,13 @@ export default function Signup() {
   ]
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative bg-black overflow-hidden">
+      {/* Cinematic Background Image */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center transition-opacity duration-1000 opacity-20"
+        style={{ backgroundImage: `url('https://i.pinimg.com/1200x/73/9a/15/739a15f89a6c439077ed7eae16b555e4.jpg')` }}
+      />
+      <div className="fixed inset-0 z-[1] bg-gradient-to-br from-brand/20 via-black/60 to-black/90 backdrop-blur-[2px]" />
       {/* Left promo panel: Cinematic & Professional */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-20 relative overflow-hidden active:scale-[0.98] transition-transform duration-700">
         <div className="absolute inset-0 bg-gradient-to-br from-brand/40 via-transparent to-brand/10 pointer-events-none" />

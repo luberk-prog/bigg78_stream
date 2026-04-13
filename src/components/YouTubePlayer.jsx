@@ -75,9 +75,28 @@ export default function YouTubePlayer({
 
   const handleSkip = (seconds) => {
     if (!isHost) return
-    const newTime = Math.max(0, Math.min(duration, currentTime + seconds))
+    const current = playerRef.current?.getCurrentTime() || 0
+    const dur = playerRef.current?.getDuration() || 0
+    const newTime = Math.max(0, Math.min(dur, current + seconds))
     playerRef.current.seekTo(newTime, true)
-    socket?.emit('seek', roomId, newTime) // Reuse seek event for simplicity
+    socket?.emit('seek', roomId, newTime)
+  }
+
+  const handleFullscreen = () => {
+    const el = containerRef.current?.parentElement // The black group div
+    if (!el) return
+    
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      if (el.requestFullscreen) {
+        el.requestFullscreen()
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen()
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen()
+      }
+    }
   }
 
   const videoIdRef = useRef(videoId)
@@ -314,7 +333,10 @@ export default function YouTubePlayer({
                   </div>
                </div>
 
-               <button className="glass p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
+               <button 
+                 onClick={handleFullscreen}
+                 className="glass p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition-all"
+               >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                </button>
             </div>
