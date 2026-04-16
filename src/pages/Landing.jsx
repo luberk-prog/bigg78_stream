@@ -28,7 +28,7 @@ export default function Landing() {
         className="fixed inset-0 z-0 bg-cover bg-center transition-opacity duration-1000 opacity-60"
         style={{ backgroundImage: `url('https://i.pinimg.com/1200x/73/9a/15/739a15f89a6c439077ed7eae16b555e4.jpg')` }}
       />
-      <div className="fixed inset-0 z-[1] bg-gradient-to-b from-black/20 via-black/40 to-black/80 backdrop-blur-[2px]" />
+      <div className="fixed inset-0 z-[1] bg-gradient-to-b from-black/20 via-black/40 to-black/80 backdrop-blur-[2px] pointer-events-none" />
       
       <main className="relative z-10">
         {/* Navigation */}
