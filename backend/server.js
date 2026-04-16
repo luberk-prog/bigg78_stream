@@ -26,6 +26,8 @@ const io = new Server(httpServer, {
 
 // In-memory room store.
 const rooms = {};
+// WebRTC Voice Chat tracking
+const voiceUsers = {};
 
 // Helper to generate a unique uppercase 6-character random room ID
 function generateRoomId() {
@@ -145,6 +147,30 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('seek', currentTime);
   });
 
+  // --- Voice Chat WebRTC Signaling ---
+  socket.on('voice-join', (roomId) => {
+    if (!voiceUsers[roomId]) voiceUsers[roomId] = [];
+    voiceUsers[roomId].push(socket.id);
+
+    // Send array of existing voice users in this room to the joining user
+    const usersInRoom = voiceUsers[roomId].filter(id => id !== socket.id);
+    socket.emit('all-users', usersInRoom);
+  });
+
+  socket.on('sending-signal', payload => {
+    io.to(payload.userToSignal).emit('user-joined-voice', {
+      signal: payload.signal,
+      callerId: payload.callerId
+    });
+  });
+
+  socket.on('returning-signal', payload => {
+    io.to(payload.callerId).emit('receiving-returned-signal', {
+      signal: payload.signal,
+      id: socket.id
+    });
+  });
+
   // Moderation events
   socket.on('kick-user', (roomId, targetSocketId) => {
     io.to(targetSocketId).emit('kicked');
@@ -184,6 +210,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    // Cleanup WatchRoom participants
     for (const roomId in rooms) {
       const room = rooms[roomId];
       if (room.participants) {
@@ -192,6 +219,12 @@ io.on('connection', (socket) => {
            room.participants.splice(index, 1);
            io.to(roomId).emit('participants-updated', room.participants);
         }
+      }
+    }
+    // Cleanup Voice Users
+    for (const roomId in voiceUsers) {
+      if (voiceUsers[roomId]) {
+        voiceUsers[roomId] = voiceUsers[roomId].filter(id => id !== socket.id);
       }
     }
     console.log(`User disconnected: ${socket.id}`);

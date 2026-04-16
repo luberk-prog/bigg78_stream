@@ -7,6 +7,7 @@ import GlassChat from '../components/GlassChat'
 import ChatSidebar from '../components/ChatSidebar'
 import YouTubePlayer from '../components/YouTubePlayer'
 import VideoCard from '../components/VideoCard'
+import VoiceChat from '../components/VoiceChat'
 import { getVideoById, searchYouTube, hasApiKey } from '../lib/youtube'
 import { mockVideos } from '../data/mockVideos'
 
@@ -244,12 +245,16 @@ export default function WatchRoom() {
             />
           </div>
 
-          <div className="mt-8 px-4 flex justify-between items-start gap-10">
-             <div className="flex-1">
-                <h1 className="text-3xl font-black mb-4 tracking-tighter leading-tight">{video?.title}</h1>
-                <div className="flex items-center gap-3 text-sm text-white/40 font-bold uppercase tracking-widest">
-                  <span>{video?.channel}</span>
-                  <span className="w-1 h-1 rounded-full bg-white/20" />
+          <div className="mt-8 px-4 flex flex-col gap-6">
+             {/* Voice Chat Component */}
+             <VoiceChat socket={socket} roomId={paramRoomId} />
+
+             <div className="flex justify-between items-start gap-10">
+               <div className="flex-1">
+                  <h1 className="text-3xl font-black mb-4 tracking-tighter leading-tight">{video?.title}</h1>
+                  <div className="flex items-center gap-3 text-sm text-white/40 font-bold uppercase tracking-widest">
+                    <span>{video?.channel}</span>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
                   <span>{video?.views} views</span>
                   <span className="w-1 h-1 rounded-full bg-white/20" />
                   <span>{video?.duration}</span>
@@ -268,9 +273,9 @@ export default function WatchRoom() {
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
                 </button>
              </div>
+           </div>
           </div>
         </div>
-
         {/* Right Pane: Members & Up Next */}
         {/* Right Pane: Members & Immersive Content Toggle */}
         <div className="flex-1 min-w-[320px] max-w-[400px] flex flex-col gap-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
