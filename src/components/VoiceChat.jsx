@@ -43,6 +43,9 @@ export default function VoiceChat({ socket, roomId }) {
 
         // 3. Handle a new user joining the voice chat
         socket.on("user-joined-voice", payload => {
+          // If we already have a connection to this peer, skip
+          if (peersRef.current.find(p => p.peerId === payload.callerId)) return;
+          
           const peer = addPeer(payload.signal, payload.callerId, stream);
           peersRef.current.push({
             peerId: payload.callerId,
@@ -83,17 +86,24 @@ export default function VoiceChat({ socket, roomId }) {
     // Note: We're purposely treating isMicOn carefully below instead of putting it in the dependency array
   }, [socket, roomId]);
 
-  // Handle toggling mic without reloading the whole WebRTC stack
   useEffect(() => {
     if (userStream.current && userStream.current.getAudioTracks().length > 0) {
       userStream.current.getAudioTracks()[0].enabled = isMicOn;
     }
   }, [isMicOn]);
 
+  const rtcConfig = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]
+  };
+
   function createPeer(userToSignal, callerId, stream) {
     const peer = new Peer({
       initiator: true,
       trickle: false,
+      config: rtcConfig,
       stream,
     });
 
@@ -105,6 +115,10 @@ export default function VoiceChat({ socket, roomId }) {
       });
     });
 
+    peer.on("stream", remoteStream => {
+      setPeers(prev => prev.map(p => p.peerId === userToSignal ? { ...p, stream: remoteStream } : p));
+    });
+
     return peer;
   }
 
@@ -112,11 +126,16 @@ export default function VoiceChat({ socket, roomId }) {
     const peer = new Peer({
       initiator: false,
       trickle: false,
+      config: rtcConfig,
       stream,
     });
 
     peer.on("signal", signal => {
       socket.emit("returning-signal", { signal, callerId });
+    });
+
+    peer.on("stream", remoteStream => {
+      setPeers(prev => prev.map(p => p.peerId === callerId ? { ...p, stream: remoteStream } : p));
     });
 
     peer.signal(incomingSignal);
@@ -125,15 +144,15 @@ export default function VoiceChat({ socket, roomId }) {
   }
 
   // Audio component to handle autoplay policy elegantly
-  const AudioElement = ({ peer }) => {
+  const AudioElement = ({ stream }) => {
     const ref = useRef();
     useEffect(() => {
-      peer.on("stream", stream => {
-        if (ref.current) {
-          ref.current.srcObject = stream;
-        }
-      });
-    }, [peer]);
+      if (ref.current && stream) {
+        ref.current.srcObject = stream;
+        // Important: ensure browser actually plays it when ready
+        ref.current.play().catch(e => console.error("Audio playback prevented:", e));
+      }
+    }, [stream]);
     return <audio playsInline autoPlay ref={ref} />;
   };
 
@@ -180,10 +199,10 @@ export default function VoiceChat({ socket, roomId }) {
         </button>
       )}
 
-      {/* Render invisible audio elements for all peers */}
+      {/* Render invisible audio elements for all peers using the resolved stream */}
       <div className="hidden">
         {peers.map((p, index) => (
-          <AudioElement key={index} peer={p.peer} />
+          p.stream && <AudioElement key={index} stream={p.stream} />
         ))}
       </div>
     </div>
