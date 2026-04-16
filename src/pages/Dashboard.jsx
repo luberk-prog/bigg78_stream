@@ -22,6 +22,11 @@ export default function Dashboard() {
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
   const [roomName, setRoomName] = useState('')
   const [createdRoomId, setCreatedRoomId] = useState(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showJoinModal, setShowJoinModal] = useState(false)
+  const [joinRoomCode, setJoinRoomCode] = useState('')
+  const [joinError, setJoinError] = useState('')
+  const [quickCreateLoading, setQuickCreateLoading] = useState(false)
 
   // Fallback mock videos split into categories
   const mockTrending = mockVideos.filter(v => v.category === 'trending')
@@ -83,6 +88,47 @@ export default function Dashboard() {
     }
   }
 
+  const handleQuickCreate = async () => {
+    setQuickCreateLoading(true)
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoId: 'dQw4w9WgXcQ', // Default video — user can change once in room
+          host: user?.name || user?.email || 'Guest',
+          roomName: roomName || `${user?.name || 'Guest'}'s Room`
+        })
+      })
+      if (res.ok) {
+        const room = await res.json()
+        navigate(`/room/${room.roomId}`)
+      } else throw new Error('Server error')
+    } catch (err) {
+      console.error('Failed to create room:', err)
+    } finally {
+      setQuickCreateLoading(false)
+      setShowCreateModal(false)
+      setRoomName('')
+    }
+  }
+
+  const handleJoinRoom = async () => {
+    const code = joinRoomCode.trim().toUpperCase()
+    if (!code) { setJoinError('Please enter a room code.'); return }
+    setJoinError('')
+    try {
+      const res = await fetch(`/api/rooms/${code}`)
+      if (res.ok) {
+        navigate(`/room/${code}`)
+      } else {
+        setJoinError('Room not found. Check the code and try again.')
+      }
+    } catch {
+      setJoinError('Could not connect. Please try again.')
+    }
+  }
+
   // Split trending into rows
   const row2 = recommended.length > 0 ? recommended : (trending.length > 0 ? trending.slice(15, 30) : mockRecommended)
   const heroVideos = trending.length > 0 ? trending.slice(0, 10) : [mockVideos[1]]
@@ -102,6 +148,28 @@ export default function Dashboard() {
       <TopToolbar activeCat={activeCat} setActiveCat={setActiveCat} />
 
       <main className="relative z-10 pl-32 pr-12 pt-32 pb-12 transition-all duration-700 max-w-[1920px] mx-auto">
+
+        {/* Room Action Bar */}
+        <div className="flex items-center gap-4 mb-10 animate-fade-in-up">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-3 bg-brand text-white font-black px-8 py-4 rounded-2xl hover:bg-brand-light active:scale-95 transition-all shadow-xl shadow-brand/20 text-sm uppercase tracking-widest"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            Create Room
+          </button>
+          <button
+            onClick={() => { setShowJoinModal(true); setJoinError(''); setJoinRoomCode('') }}
+            className="flex items-center gap-3 glass border border-white/10 text-white font-black px-8 py-4 rounded-2xl hover:bg-white/10 active:scale-95 transition-all shadow-xl text-sm uppercase tracking-widest"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            Join Room
+          </button>
+          <div className="ml-auto text-[10px] font-black uppercase tracking-widest text-white/20">
+            Or select a video below to host a party
+          </div>
+        </div>
+
         <div className="grid grid-cols-12 gap-8">
           
           {/* Left Lane: Navigation & Continued */}
@@ -332,6 +400,85 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* ── Create Room Modal ── */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setShowCreateModal(false)} />
+          <div className="relative glass-card max-w-md w-full border border-white/10 shadow-3xl p-10 animate-scale-in">
+            <button onClick={() => setShowCreateModal(false)} className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-brand/20 border border-brand/20 flex items-center justify-center text-brand mb-6">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+            </div>
+            <h2 className="text-2xl font-black mb-2 tracking-tight">Create a Room</h2>
+            <p className="text-white/40 text-sm mb-8">Start a private watch party. You can change the video once inside.</p>
+
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 block">Room Name (optional)</label>
+            <input
+              type="text"
+              value={roomName}
+              onChange={e => setRoomName(e.target.value)}
+              placeholder={`${user?.name || 'Guest'}'s Room`}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20 mb-6"
+              onKeyDown={e => e.key === 'Enter' && handleQuickCreate()}
+            />
+
+            <button
+              onClick={handleQuickCreate}
+              disabled={quickCreateLoading}
+              className="w-full bg-brand text-white font-black py-4 rounded-2xl hover:bg-brand-light active:scale-95 transition-all shadow-xl shadow-brand/20 flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {quickCreateLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Launch Room'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Join Room Modal ── */}
+      {showJoinModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setShowJoinModal(false)} />
+          <div className="relative glass-card max-w-md w-full border border-white/10 shadow-3xl p-10 animate-scale-in">
+            <button onClick={() => setShowJoinModal(false)} className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h2 className="text-2xl font-black mb-2 tracking-tight">Join a Room</h2>
+            <p className="text-white/40 text-sm mb-8">Enter the 6-character room code shared by the host.</p>
+
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 block">Room Code</label>
+            <input
+              type="text"
+              value={joinRoomCode}
+              onChange={e => setJoinRoomCode(e.target.value.toUpperCase())}
+              placeholder="e.g. AB12CD"
+              maxLength={8}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold font-mono tracking-[0.3em] focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20 mb-3 uppercase"
+              onKeyDown={e => e.key === 'Enter' && handleJoinRoom()}
+            />
+            {joinError && (
+              <p className="text-red-400 text-[11px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />{joinError}
+              </p>
+            )}
+
+            <button
+              onClick={handleJoinRoom}
+              className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3 mt-3"
+            >
+              Join Room
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
