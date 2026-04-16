@@ -27,6 +27,15 @@ export default function Dashboard() {
   const [joinRoomCode, setJoinRoomCode] = useState('')
   const [joinError, setJoinError] = useState('')
   const [quickCreateLoading, setQuickCreateLoading] = useState(false)
+  // Create Room — video search
+  const [createSearch, setCreateSearch] = useState('')
+  const [createSearchResults, setCreateSearchResults] = useState([])
+  const [createSearchLoading, setCreateSearchLoading] = useState(false)
+  const [selectedCreateVideo, setSelectedCreateVideo] = useState(null)
+  // Join Room — search rooms
+  const [joinSearch, setJoinSearch] = useState('')
+  const [joinRooms, setJoinRooms] = useState([])
+  const [joinSearchLoading, setJoinSearchLoading] = useState(false)
 
   // Fallback mock videos split into categories
   const mockTrending = mockVideos.filter(v => v.category === 'trending')
@@ -65,7 +74,7 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           videoId: videoId,
-          host: user?.name || user?.email || 'Guest',
+          host: user?.email || 'guest@bigg78.local',  // always email for isHost check
           roomName: roomName
         })
       })
@@ -88,15 +97,29 @@ export default function Dashboard() {
     }
   }
 
+  // Video search for Create Room modal
+  const handleCreateSearch = async (q) => {
+    setCreateSearch(q)
+    if (!q.trim()) { setCreateSearchResults([]); return }
+    if (!hasApiKey()) { setCreateSearchResults(mockVideos.slice(0, 5)); return }
+    setCreateSearchLoading(true)
+    try {
+      const res = await searchYouTube(q, 8)
+      setCreateSearchResults(res.items || [])
+    } catch { setCreateSearchResults([]) }
+    finally { setCreateSearchLoading(false) }
+  }
+
   const handleQuickCreate = async () => {
+    if (!selectedCreateVideo) return
     setQuickCreateLoading(true)
     try {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          videoId: 'dQw4w9WgXcQ', // Default video — user can change once in room
-          host: user?.name || user?.email || 'Guest',
+          videoId: selectedCreateVideo.youtubeId || selectedCreateVideo.id,
+          host: user?.email || 'guest@bigg78.local',  // always email for isHost check
           roomName: roomName || `${user?.name || 'Guest'}'s Room`
         })
       })
@@ -110,7 +133,23 @@ export default function Dashboard() {
       setQuickCreateLoading(false)
       setShowCreateModal(false)
       setRoomName('')
+      setSelectedCreateVideo(null)
+      setCreateSearch('')
+      setCreateSearchResults([])
     }
+  }
+
+  // Room search for Join Room modal
+  const handleJoinSearch = async (q) => {
+    setJoinSearch(q)
+    if (!q.trim()) { setJoinRooms([]); return }
+    setJoinSearchLoading(true)
+    try {
+      const res = await fetch(`/api/rooms?search=${encodeURIComponent(q)}`)
+      const data = await res.json()
+      setJoinRooms(Array.isArray(data) ? data : [])
+    } catch { setJoinRooms([]) }
+    finally { setJoinSearchLoading(false) }
   }
 
   const handleJoinRoom = async () => {
@@ -403,81 +442,174 @@ export default function Dashboard() {
 
       {/* ── Create Room Modal ── */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setShowCreateModal(false)} />
-          <div className="relative glass-card max-w-md w-full border border-white/10 shadow-3xl p-10 animate-scale-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => { setShowCreateModal(false); setCreateSearch(''); setCreateSearchResults([]); setSelectedCreateVideo(null) }} />
+          <div className="relative glass-card max-w-lg w-full border border-white/10 shadow-3xl p-8 animate-scale-in max-h-[90vh] overflow-y-auto">
             <button onClick={() => setShowCreateModal(false)} className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
 
-            <div className="w-14 h-14 rounded-2xl bg-brand/20 border border-brand/20 flex items-center justify-center text-brand mb-6">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-brand/20 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-black tracking-tight">Create a Room</h2>
+                <p className="text-white/40 text-xs mt-0.5">Search for a video, name your room, then launch.</p>
+              </div>
             </div>
-            <h2 className="text-2xl font-black mb-2 tracking-tight">Create a Room</h2>
-            <p className="text-white/40 text-sm mb-8">Start a private watch party. You can change the video once inside.</p>
 
-            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 block">Room Name (optional)</label>
+            {/* Room Name */}
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-2 block">Room Name (optional)</label>
             <input
               type="text"
               value={roomName}
               onChange={e => setRoomName(e.target.value)}
               placeholder={`${user?.name || 'Guest'}'s Room`}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20 mb-6"
-              onKeyDown={e => e.key === 'Enter' && handleQuickCreate()}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20 mb-5"
             />
+
+            {/* Video Search */}
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-2 block">Search Video <span className="text-red-400">*</span></label>
+            <div className="relative mb-3">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input
+                type="text"
+                value={createSearch}
+                onChange={e => handleCreateSearch(e.target.value)}
+                placeholder="Search YouTube..."
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20"
+              />
+              {createSearchLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />}
+            </div>
+
+            {/* Selected Video Preview */}
+            {selectedCreateVideo && (
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-brand/10 border border-brand/20 mb-4">
+                <img src={selectedCreateVideo.thumbnail} className="w-16 aspect-video rounded-lg object-cover shrink-0" alt="" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate text-white">{selectedCreateVideo.title}</p>
+                  <p className="text-[10px] text-white/40 truncate">{selectedCreateVideo.channel}</p>
+                </div>
+                <button onClick={() => setSelectedCreateVideo(null)} className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 hover:bg-white/20 transition-all">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            )}
+
+            {/* Search Results */}
+            {createSearchResults.length > 0 && !selectedCreateVideo && (
+              <div className="rounded-2xl border border-white/10 overflow-hidden mb-5 max-h-52 overflow-y-auto">
+                {createSearchResults.map(v => (
+                  <button key={v.id} onClick={() => { setSelectedCreateVideo(v); setCreateSearch(''); setCreateSearchResults([]) }}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-all text-left border-b border-white/5 last:border-0">
+                    <img src={v.thumbnail} className="w-14 aspect-video rounded-lg object-cover shrink-0" alt="" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate">{v.title}</p>
+                      <p className="text-[10px] text-white/40 truncate">{v.channel}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <button
               onClick={handleQuickCreate}
-              disabled={quickCreateLoading}
-              className="w-full bg-brand text-white font-black py-4 rounded-2xl hover:bg-brand-light active:scale-95 transition-all shadow-xl shadow-brand/20 flex items-center justify-center gap-3 disabled:opacity-50"
+              disabled={quickCreateLoading || !selectedCreateVideo}
+              className="w-full bg-brand text-white font-black py-4 rounded-2xl hover:bg-brand-light active:scale-95 transition-all shadow-xl shadow-brand/20 flex items-center justify-center gap-3 disabled:opacity-40"
             >
               {quickCreateLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Launch Room'}
             </button>
+            {!selectedCreateVideo && <p className="text-center text-[10px] text-white/30 mt-3 uppercase tracking-widest">Search and select a video to continue</p>}
           </div>
         </div>
       )}
 
       {/* ── Join Room Modal ── */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-fade-in">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setShowJoinModal(false)} />
-          <div className="relative glass-card max-w-md w-full border border-white/10 shadow-3xl p-10 animate-scale-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => { setShowJoinModal(false); setJoinRooms([]); setJoinSearch('') }} />
+          <div className="relative glass-card max-w-lg w-full border border-white/10 shadow-3xl p-8 animate-scale-in max-h-[90vh] overflow-y-auto">
             <button onClick={() => setShowJoinModal(false)} className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
 
-            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-black tracking-tight">Join a Room</h2>
+                <p className="text-white/40 text-xs mt-0.5">Search by room name or enter a code directly.</p>
+              </div>
             </div>
-            <h2 className="text-2xl font-black mb-2 tracking-tight">Join a Room</h2>
-            <p className="text-white/40 text-sm mb-8">Enter the 6-character room code shared by the host.</p>
 
-            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 block">Room Code</label>
+            {/* Search Rooms */}
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-2 block">Search by Room Name</label>
+            <div className="relative mb-4">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input
+                type="text"
+                value={joinSearch}
+                onChange={e => handleJoinSearch(e.target.value)}
+                placeholder="Search room name..."
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20"
+              />
+              {joinSearchLoading && <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />}
+            </div>
+
+            {/* Room Search Results */}
+            {joinRooms.length > 0 && (
+              <div className="rounded-2xl border border-white/10 overflow-hidden mb-5">
+                {joinRooms.map(r => (
+                  <button key={r.roomId} onClick={() => navigate(`/room/${r.roomId}`)}
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-all text-left border-b border-white/5 last:border-0">
+                    <div>
+                      <p className="text-sm font-bold">{r.roomName}</p>
+                      <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Code: {r.roomId} · {r.participantCount} watching</p>
+                    </div>
+                    <svg className="w-4 h-4 text-white/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                ))}
+              </div>
+            )}
+            {joinSearch.trim() && joinRooms.length === 0 && !joinSearchLoading && (
+              <p className="text-white/30 text-xs text-center mb-4">No rooms found for "{joinSearch}"</p>
+            )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">or enter code directly</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-2 block">Room Code</label>
             <input
               type="text"
               value={joinRoomCode}
               onChange={e => setJoinRoomCode(e.target.value.toUpperCase())}
               placeholder="e.g. AB12CD"
               maxLength={8}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold font-mono tracking-[0.3em] focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20 mb-3 uppercase"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm font-bold font-mono tracking-[0.3em] focus:outline-none focus:border-brand/50 focus:bg-white/10 transition-all placeholder:text-white/20 mb-3 uppercase"
               onKeyDown={e => e.key === 'Enter' && handleJoinRoom()}
             />
             {joinError && (
-              <p className="text-red-400 text-[11px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+              <p className="text-red-400 text-[11px] font-black uppercase tracking-widest mb-3 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />{joinError}
               </p>
             )}
-
             <button
               onClick={handleJoinRoom}
-              className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3 mt-3"
+              className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-white/90 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3"
             >
-              Join Room
+              Join by Code
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </button>
           </div>
         </div>
       )}
+
 
     </div>
   )

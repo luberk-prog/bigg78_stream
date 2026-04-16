@@ -55,6 +55,24 @@ app.post('/api/rooms', (req, res) => {
   res.status(201).json(newRoom);
 });
 
+app.get('/api/rooms', (req, res) => {
+  const search = (req.query.search || '').trim().toUpperCase();
+  const allRooms = Object.values(rooms).map(r => ({
+    roomId: r.roomId,
+    roomName: r.roomName,
+    host: r.host,
+    videoId: r.videoId,
+    participantCount: (r.participants || []).length,
+    createdAt: r.createdAt
+  }));
+  if (!search) return res.json(allRooms);
+  const filtered = allRooms.filter(r =>
+    r.roomId.includes(search) ||
+    r.roomName.toUpperCase().includes(search)
+  );
+  res.json(filtered);
+});
+
 app.get('/api/rooms/:roomId', (req, res) => {
   const normalizedId = req.params.roomId.trim().toUpperCase();
   const room = rooms[normalizedId];
