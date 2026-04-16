@@ -45,6 +45,7 @@ app.post('/api/rooms', (req, res) => {
     roomName: roomName || `${host}'s Room`,
     videoId,
     host: host || 'Guest',
+    currentTime: 0,
     createdAt: new Date().toISOString(),
     participants: []
   };
@@ -85,6 +86,12 @@ io.on('connection', (socket) => {
        rooms[roomId].participants = rooms[roomId].participants.filter(p => p.socketId !== socket.id);
        rooms[roomId].participants.push(participant);
        io.to(roomId).emit('participants-updated', rooms[roomId].participants);
+
+       // Sync the new user with current video and time
+       socket.emit('sync-video', {
+         videoId: rooms[roomId].videoId,
+         time: rooms[roomId].currentTime || 0
+       });
     }
     
     socket.to(roomId).emit('user-joined');
@@ -95,9 +102,17 @@ io.on('connection', (socket) => {
     const normalizedId = roomId.trim().toUpperCase();
     if (rooms[normalizedId]) {
       rooms[normalizedId].videoId = videoId;
+      rooms[normalizedId].currentTime = 0; // Reset time on video change
     }
     socket.to(roomId).emit('change-video', videoId);
     console.log(`Room ${roomId} video changed to ${videoId}`);
+  });
+
+  socket.on('sync-time', ({ roomId, time }) => {
+    const normalizedId = roomId.trim().toUpperCase();
+    if (rooms[normalizedId]) {
+      rooms[normalizedId].currentTime = time;
+    }
   });
 
   socket.on('play', (roomId, currentTime) => {

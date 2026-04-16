@@ -152,6 +152,7 @@ export default function YouTubePlayer({
         events: {
           onReady: (event) => {
             playerRef.current = event.target
+            window.player = event.target
             setPlayerReady(true)
             setDuration(event.target.getDuration())
             event.target.setVolume(volume)
@@ -187,6 +188,7 @@ export default function YouTubePlayer({
       if (internalPlayer?.destroy) {
         internalPlayer.destroy()
         playerRef.current = null
+        window.player = null
         setPlayerReady(false)
       }
     }

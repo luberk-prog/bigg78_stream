@@ -64,10 +64,21 @@ export default function WatchRoom() {
       socket.on('change-video', handleVideoChange);
       socket.on('participants-updated', handleParticipants);
       socket.on('kicked', handleKick);
+      socket.on('sync-video', ({ videoId, time }) => {
+        if (videoId) {
+          setRefreshKey(prev => prev + 1);
+          setTimeout(() => {
+            if (window.player) {
+              window.player.seekTo(time, true);
+            }
+          }, 1000);
+        }
+      });
       return () => {
         socket.off('change-video', handleVideoChange);
         socket.off('participants-updated', handleParticipants);
         socket.off('kicked', handleKick);
+        socket.off('sync-video');
       }
     }
   }, [socket, paramRoomId, user, navigate]);
@@ -132,6 +143,23 @@ export default function WatchRoom() {
       setIsVideoEnded(false);
     }
   }, [isVideoEnded, autoNext, related, hasPlaybackControl, paramRoomId, socket, navigate])
+
+  // Periodic Sync from Host
+  useEffect(() => {
+    if (!socket || !hasPlaybackControl) return;
+
+    const interval = setInterval(() => {
+      if (window.player && paramRoomId) {
+        const time = window.player.getCurrentTime();
+        socket.emit("sync-time", {
+            roomId: paramRoomId,
+            time
+        });
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [socket, hasPlaybackControl, paramRoomId]);
 
   const playerVideoId = video?.youtubeId || video?.id || null
 
